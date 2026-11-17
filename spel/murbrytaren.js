@@ -63,7 +63,7 @@
     let noteTimer = null;
     const note = (t, ms) => { noteEl.textContent = t; noteEl.classList.add('on'); clearTimeout(noteTimer); if(ms) noteTimer = setTimeout(() => noteEl.classList.remove('on'), ms); };
 
-    let bricks = [], px = W / 2, ball = null, stuck = true, sparks = [], finished = false, clock = 0, lastHit = 0;
+    let bricks = [], px = W / 2, balls = [], stuck = true, sparks = [], finished = false, clock = 0, lastHit = 0;
     function renderBanor(){
       banorEl.innerHTML = '';
       BANOR.forEach((b, i) => {
@@ -82,57 +82,101 @@
         const lo = ch.toLowerCase(), hp = level === 'big' && ch !== lo ? 2 : 1;
         bricks.push({x: X0 + c * (BW + GAP), y: y0 + r * (BH + GAP), col: COL[lo], hp, max: hp});
       }));
+      // Stjärnklossar: fyra per bana från bana 2, på samma platser varje gång (fast frö per bana).
+      pw = {};
+      if(i > 0){
+        let seed = 7919 * (i + 1); const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+        const kinds = ['multi', 'wide', 'fire', 'slow'], idx = bricks.map((_, k) => k);
+        for(let k = idx.length - 1; k > 0; k--){ const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
+        idx.slice(0, 4).forEach((k, n) => { bricks[k].pu = kinds[n]; });
+      }
       newBall(true); lastHit = clock;
       note(BANOR[i].name + ': tryck för att skjuta iväg bollen', 2500);
     }
+    // ---------- Bollar och stjärnklossar ----------
+    // Flera bollar kan vara i spel samtidigt. En ny boll kommer först när alla bollar har försvunnit.
+    // pw: aktiva effekter från stjärnklossarna, med tiden (clock) då de tar slut.
+    const PU = {
+      multi: {icon: '🔵', text: 'Fler bollar!'},
+      wide: {icon: '↔️', text: 'Bred platta!', secs: 15},
+      fire: {icon: '🔥', text: 'Eldboll!', secs: 8},
+      slow: {icon: '🐢', text: 'Långsam boll!', secs: 12}
+    };
+    let pw = {};
+    const padW = () => P.pw * (pw.wide > clock ? 1.5 : 1);
     function newBall(first){
-      stuck = true; ball = {x: px, y: 548, vx: 0, vy: 0, r: 11};
+      stuck = true; balls = [{x: px, y: 548, vx: 0, vy: 0, r: 11}];
       if(!first) note('Ny boll! Tryck för att skjuta', 1600);
     }
     function launch(){
       if(!stuck || finished) return;
       stuck = false;
-      const a = (-90 + (Math.random() * 40 - 20)) * Math.PI / 180;
-      ball.vx = Math.cos(a) * P.speed; ball.vy = Math.sin(a) * P.speed;
+      const a = (-90 + (Math.random() * 40 - 20)) * Math.PI / 180, b = balls[0];
+      b.vx = Math.cos(a) * P.speed; b.vy = Math.sin(a) * P.speed;
       tone(660, 0.08);
+    }
+    function powerUp(kind, x, y){
+      const p = PU[kind];
+      if(kind === 'multi'){
+        // Två nya bollar från den boll som är högst upp, i lite olika riktningar.
+        const src = balls.slice().sort((a, b) => a.y - b.y)[0] || {x, y, vx: 0, vy: -P.speed, r: 11};
+        const sp = Math.max(P.speed * 0.8, Math.hypot(src.vx, src.vy)), base = Math.atan2(src.vy, src.vx);
+        [-0.45, 0.45].forEach(d => { if(balls.length < 6){ const a = base + d; balls.push({x: src.x, y: src.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 11}); } });
+      }else pw[kind] = clock + p.secs;
+      note(p.icon + ' ' + p.text, 1500);
+      [784, 988, 1319].forEach((f, i) => setTimeout(() => tone(f, 0.1, 'sine', 0.15), i * 70));
     }
     function burst(x, y, col){ for(let i = 0; i < 10; i++){ const a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 140; sparks.push({x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.6, col}); } }
     function step(dt){
       clock += dt;
       sparks.forEach(s => { s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 300 * dt; s.life -= dt; }); sparks = sparks.filter(s => s.life > 0);
       if(finished) return;
-      if(stuck){ ball.x = px; ball.y = 560 - 18 - ball.r; return; }
-      const n = Math.ceil(Math.hypot(ball.vx, ball.vy) * dt / 6);   // små delsteg så att bollen inte går igenom klossar
-      for(let k = 0; k < n; k++){
-        const h = dt / n;
-        ball.x += ball.vx * h; ball.y += ball.vy * h;
-        if(ball.x < ball.r){ ball.x = ball.r; ball.vx = Math.abs(ball.vx); tone(330, 0.04); }
-        if(ball.x > W - ball.r){ ball.x = W - ball.r; ball.vx = -Math.abs(ball.vx); tone(330, 0.04); }
-        if(ball.y < ball.r){ ball.y = ball.r; ball.vy = Math.abs(ball.vy); tone(330, 0.04); }
-        // Plattan: studsvinkeln beror på var bollen träffar, så att barnet kan sikta.
-        if(ball.vy > 0 && ball.y + ball.r >= 560 && ball.y + ball.r <= 578 && Math.abs(ball.x - px) <= P.pw / 2 + ball.r){
-          const off = Math.max(-1, Math.min(1, (ball.x - px) / (P.pw / 2))), sp = Math.hypot(ball.vx, ball.vy);
-          let a = (-90 + off * 60) * Math.PI / 180;
-          // Osynlig hjälp: har ingen kloss träffats på 12 sekunder siktar studsen mot en kvarvarande kloss,
-          // så att bollen aldrig fastnar i ett mönster som missar de sista klossarna.
-          if(clock - lastHit > 12){
-            const left = bricks.filter(b => b.hp > 0), t = left[Math.floor(Math.random() * left.length)];
-            if(t){ a = Math.atan2(t.y + BH / 2 - ball.y, t.x + BW / 2 - ball.x); a = Math.max(-160 * Math.PI / 180, Math.min(-20 * Math.PI / 180, a)); lastHit = clock - 6; }
+      const pwW = padW(); px = Math.max(pwW / 2, Math.min(W - pwW / 2, px));
+      if(stuck){ const b = balls[0]; b.x = px; b.y = 560 - 18 - b.r; return; }
+      const mdt = dt * (pw.slow > clock ? 0.65 : 1), fire = pw.fire > clock;
+      const queued = [];
+      balls = balls.filter(ball => {
+        const n = Math.ceil(Math.hypot(ball.vx, ball.vy) * mdt / 6);   // små delsteg så att bollen inte går igenom klossar
+        for(let k = 0; k < n; k++){
+          const h = mdt / n;
+          ball.x += ball.vx * h; ball.y += ball.vy * h;
+          if(ball.x < ball.r){ ball.x = ball.r; ball.vx = Math.abs(ball.vx); tone(330, 0.04); }
+          if(ball.x > W - ball.r){ ball.x = W - ball.r; ball.vx = -Math.abs(ball.vx); tone(330, 0.04); }
+          if(ball.y < ball.r){ ball.y = ball.r; ball.vy = Math.abs(ball.vy); tone(330, 0.04); }
+          // Plattan: studsvinkeln beror på var bollen träffar, så att barnet kan sikta.
+          if(ball.vy > 0 && ball.y + ball.r >= 560 && ball.y + ball.r <= 578 && Math.abs(ball.x - px) <= pwW / 2 + ball.r){
+            const off = Math.max(-1, Math.min(1, (ball.x - px) / (pwW / 2))), sp = Math.hypot(ball.vx, ball.vy);
+            let a = (-90 + off * 60) * Math.PI / 180;
+            // Osynlig hjälp: har ingen kloss träffats på 12 sekunder siktar studsen mot en kvarvarande kloss,
+            // så att bollen aldrig fastnar i ett mönster som missar de sista klossarna.
+            if(clock - lastHit > 12){
+              const left = bricks.filter(b => b.hp > 0), t = left[Math.floor(Math.random() * left.length)];
+              if(t){ a = Math.atan2(t.y + BH / 2 - ball.y, t.x + BW / 2 - ball.x); a = Math.max(-160 * Math.PI / 180, Math.min(-20 * Math.PI / 180, a)); lastHit = clock - 6; }
+            }
+            ball.vx = Math.cos(a) * sp; ball.vy = Math.sin(a) * sp; ball.y = 560 - ball.r; tone(440, 0.07);
           }
-          ball.vx = Math.cos(a) * sp; ball.vy = Math.sin(a) * sp; ball.y = 560 - ball.r; tone(440, 0.07);
+          if(ball.y - ball.r > H){ tone(200, 0.06, 'triangle', 0.25); return false; }
+          for(const b of bricks){
+            if(b.hp <= 0) continue;
+            const cx = Math.max(b.x, Math.min(ball.x, b.x + BW)), cy = Math.max(b.y, Math.min(ball.y, b.y + BH));
+            if((ball.x - cx) ** 2 + (ball.y - cy) ** 2 > ball.r * ball.r) continue;
+            // Eldbollen går rakt igenom och krossar klossen direkt.
+            if(fire) b.hp = 0;
+            else {
+              const ox = Math.min(ball.x + ball.r - b.x, b.x + BW - (ball.x - ball.r)), oy = Math.min(ball.y + ball.r - b.y, b.y + BH - (ball.y - ball.r));
+              if(ox < oy) ball.vx = -ball.vx; else ball.vy = -ball.vy;
+              b.hp--;
+            }
+            lastHit = clock;
+            if(b.hp <= 0){ burst(b.x + BW / 2, b.y + BH / 2, fire ? '#ff8a2e' : b.col); tone(520 + Math.random() * 300, 0.09); if(b.pu){ queued.push([b.pu, b.x + BW / 2, b.y + BH / 2]); b.pu = null; } }
+            else tone(260, 0.07, 'square');
+            if(!fire) break;
+          }
         }
-        if(ball.y - ball.r > H){ tone(200, 0.06, 'triangle', 0.25); newBall(false); return; }
-        for(const b of bricks){
-          if(b.hp <= 0) continue;
-          const cx = Math.max(b.x, Math.min(ball.x, b.x + BW)), cy = Math.max(b.y, Math.min(ball.y, b.y + BH));
-          if((ball.x - cx) ** 2 + (ball.y - cy) ** 2 > ball.r * ball.r) continue;
-          const ox = Math.min(ball.x + ball.r - b.x, b.x + BW - (ball.x - ball.r)), oy = Math.min(ball.y + ball.r - b.y, b.y + BH - (ball.y - ball.r));
-          if(ox < oy) ball.vx = -ball.vx; else ball.vy = -ball.vy;
-          b.hp--; lastHit = clock;
-          if(b.hp <= 0){ burst(b.x + BW / 2, b.y + BH / 2, b.col); tone(520 + Math.random() * 300, 0.09); } else tone(260, 0.07, 'square');
-          break;
-        }
-      }
+        return true;
+      });
+      queued.forEach(q => powerUp(...q));
+      if(!balls.length) newBall(false);
       if(bricks.every(b => b.hp <= 0)) win();
     }
     function win(){
@@ -154,11 +198,26 @@
         g.fillStyle = 'rgba(255,255,255,.35)'; roundRect(b.x + 4, b.y + 3, BW - 8, 6, 3); g.fill();
         if(b.max === 2 && b.hp === 2){ g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 3; roundRect(b.x + 2, b.y + 2, BW - 4, BH - 4, 5); g.stroke(); }
         if(b.max === 2 && b.hp === 1){ g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(b.x + 20, b.y + 4); g.lineTo(b.x + 34, b.y + 16); g.lineTo(b.x + 28, b.y + 25); g.stroke(); }
+        if(b.pu){
+          // Stjärnklossen: en vit rund bricka med stjärna, som pulserar lite så att den syns på alla färger.
+          const k = 1 + Math.sin(clock * 5) * 0.08;
+          g.fillStyle = '#fff'; g.beginPath(); g.arc(b.x + BW / 2, b.y + BH / 2, 12 * k, 0, Math.PI * 2); g.fill();
+          g.font = `${Math.round(17 * k)}px system-ui,"Apple Color Emoji","Segoe UI Emoji",sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⭐', b.x + BW / 2, b.y + BH / 2 + 1);
+        }
       });
       sparks.forEach(s => { g.globalAlpha = Math.max(0, s.life / 0.6); g.fillStyle = s.col; g.fillRect(s.x - 3, s.y - 3, 6, 6); }); g.globalAlpha = 1;
-      g.fillStyle = '#f5c02e'; roundRect(px - P.pw / 2, 560, P.pw, 18, 9); g.fill();
-      g.fillStyle = 'rgba(255,255,255,.5)'; roundRect(px - P.pw / 2 + 8, 563, P.pw - 16, 5, 3); g.fill();
-      if(ball){ g.fillStyle = '#fff'; g.beginPath(); g.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2); g.fill(); }
+      const pwW = padW(), fire = pw.fire > clock;
+      g.fillStyle = pw.wide > clock ? '#7ad6ff' : '#f5c02e'; roundRect(px - pwW / 2, 560, pwW, 18, 9); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.5)'; roundRect(px - pwW / 2 + 8, 563, pwW - 16, 5, 3); g.fill();
+      balls.forEach(b => {
+        if(fire){ g.fillStyle = 'rgba(255,120,30,.45)'; g.beginPath(); g.arc(b.x, b.y, b.r + 7, 0, Math.PI * 2); g.fill(); }
+        g.fillStyle = fire ? '#ffb02e' : '#fff'; g.beginPath(); g.arc(b.x, b.y, b.r, 0, Math.PI * 2); g.fill();
+      });
+      // Aktiva effekter uppe till vänster, med sekunder kvar.
+      const act = ['wide', 'fire', 'slow'].filter(k => pw[k] > clock);
+      g.font = '22px system-ui,"Apple Color Emoji","Segoe UI Emoji",sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
+      act.forEach((k, n) => { const x = 14 + n * 86; g.fillStyle = 'rgba(255,255,255,.85)'; roundRect(x, 12, 78, 30, 15); g.fill();
+        g.fillStyle = '#1D2842'; g.fillText(PU[k].icon + ' ' + Math.ceil(pw[k] - clock), x + 10, 28); });
     }
     function roundRect(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
     function layout(){
@@ -169,7 +228,7 @@
     }
     // Plattan följer fingret i sidled; ett tryck skjuter iväg bollen.
     const toX = e => { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * W; };
-    const movePad = e => { px = Math.max(P.pw / 2, Math.min(W - P.pw / 2, toX(e))); };
+    const movePad = e => { px = Math.max(padW() / 2, Math.min(W - padW() / 2, toX(e))); };
     cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.setPointerCapture && cv.setPointerCapture(e.pointerId); movePad(e); launch(); });
     cv.addEventListener('pointermove', e => { if(e.buttons || e.pointerType === 'mouse') movePad(e); });
     const keys = {};
@@ -180,8 +239,8 @@
     function frame(t){
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.033, (t - (last || t)) / 1000); last = t;
-      if(keys.ArrowLeft) px = Math.max(P.pw / 2, px - 600 * dt);
-      if(keys.ArrowRight) px = Math.min(W - P.pw / 2, px + 600 * dt);
+      if(keys.ArrowLeft) px = Math.max(padW() / 2, px - 600 * dt);
+      if(keys.ArrowRight) px = Math.min(W - padW() / 2, px + 600 * dt);
       step(dt); draw();
     }
     const ro = window.ResizeObserver ? new ResizeObserver(layout) : null; if(ro) ro.observe(area);
@@ -189,13 +248,13 @@
 
     return {
       stop(){ cancelAnimationFrame(raf); clearTimeout(noteTimer); if(ro) ro.disconnect(); window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); try{ if(ac) ac.close(); }catch(e){} root.innerHTML = ''; },
-      _test: {bricks: () => bricks, ball: () => ball, setPad: x => { px = x; }, launch, P, step: dt => step(dt), stuck: () => stuck, finished: () => finished, load}
+      _test: {bricks: () => bricks, ball: () => balls.slice().sort((a, b) => b.y - a.y)[0], balls: () => balls, pw: () => pw, clock: () => clock, setPad: x => { px = x; }, launch, P, step: dt => step(dt), stuck: () => stuck, finished: () => finished, load}
     };
   }
 
   (window.HLK_SPEL = window.HLK_SPEL || []).push({
     id: 'murbrytaren', title: 'Murbrytaren', icon: '🧱',
-    about: 'Flytta plattan med fingret och studsa bollen mot klossarna. Missar man bollen kommer en ny. 5 banor: regnbåge, hjärta, bil, glad gubbe och fisk. Stor: smalare platta, snabbare boll och klossar som kräver två träffar.',
+    about: 'Flytta plattan med fingret och studsa bollen mot klossarna. Missar man bollen kommer en ny. 5 banor: regnbåge, hjärta, bil, glad gubbe och fisk. Stjärnklossar från bana 2 ger fler bollar, bred platta, eldboll eller långsam boll. Stor: smalare platta, snabbare boll och klossar som kräver två träffar.',
     start
   });
 })();

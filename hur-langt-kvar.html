@@ -111,6 +111,7 @@ input[type=search]{
 .gbtn{border:0;background:var(--card);color:var(--ink);border-radius:22px;padding:8px 18px 8px 10px;display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;
   box-shadow:inset 0 0 0 3px var(--line);cursor:pointer;position:relative;transition:opacity .6s}
 .gbtn .gi{font-size:2.4rem;line-height:1}
+.gbtn.always{box-shadow:inset 0 0 0 3px var(--done)}
 .gbtn.new{animation:gpop .9s ease}
 .gbtn.sleepy{opacity:.5}
 .gbtn.sleepy::after{content:"🌙";position:absolute;top:-10px;right:-6px;font-size:1.3rem}
@@ -388,10 +389,21 @@ function setFrom(m){
 }
 document.querySelectorAll('#fromSeg button').forEach(b => b.addEventListener('click', () => setFrom(b.dataset.v)));
 
+// fetch med tidsgräns. En uppkoppling som finns men inte släpper igenom något (vanligt i bilen) ger då samma
+// fel som ingen uppkoppling (TypeError), i stället för att hänga kvar i flera minuter.
+async function fetchT(url, ms, outer){
+  const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), ms);
+  const fwd = () => ctrl.abort();
+  if(outer){ if(outer.aborted) ctrl.abort(); else outer.addEventListener('abort', fwd, {once: true}); }
+  try{ return await fetch(url, {signal: ctrl.signal}); }
+  catch(e){ if(e && e.name === 'AbortError' && !(outer && outer.aborted)) throw new TypeError('Ingen kontakt i tid'); throw e; }
+  finally{ clearTimeout(t); if(outer) outer.removeEventListener('abort', fwd); }
+}
+
 async function geocode(q, signal, near){
   const c = near || [18.07, 59.33];   // utan position: gynna Stockholmsområdet
   const u = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&lat=${c[1].toFixed(4)}&lon=${c[0].toFixed(4)}`;
-  const r = await fetch(u, {signal});
+  const r = await fetchT(u, 10000, signal);
   if(!r.ok) throw new Error('Platssökningen svarade inte. Försök igen.');
   const j = await r.json();
   return (j.features || []).map(f => {
@@ -461,7 +473,7 @@ async function osrm(a, b, via){
   if(mode === 'sim' && sim && sim.offline) throw new TypeError('Simulerat: ingen uppkoppling');
   const pts = via ? [a, via, b] : [a, b];
   const u = `https://router.project-osrm.org/route/v1/driving/${pts.map(p => p[0] + ',' + p[1]).join(';')}?overview=full&geometries=geojson`;
-  const res = await fetch(u);
+  const res = await fetchT(u, 15000);
   if(!res.ok) throw new Error('Vägtjänsten svarade inte. Försök igen om en stund.');
   const j = await res.json();
   if(j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error('Hittade ingen bilväg dit.');
@@ -1026,7 +1038,7 @@ async function cachedGet(url, networkFirst){
   try{ if(window.caches) cache = await caches.open(TILE_CACHE); }catch(e){}
   if(!networkFirst && cache){ const hit = await cache.match(url); if(hit) return hit; }
   try{
-    const res = await fetch(url);
+    const res = await fetchT(url, 12000);
     if(res.ok && cache) cache.put(url, res.clone()).catch(() => {});
     return res;
   }catch(e){
@@ -1078,6 +1090,20 @@ async function prefetchTiles(){
   await Promise.all([worker(), worker(), worker(), worker()]);
   mapCacheText = `Kartan för resan är sparad i enheten (${prefetched.size} kartbitar).`;
   render();
+  pruneTiles().catch(() => {});
+}
+// Kartcachen får inte växa för evigt: över 4000 kartbitar tas de äldsta bort ned till 3000 (aldrig den
+// pågående resans). Annars kan enheten till slut rensa all sparad data för sidan på egen hand.
+async function pruneTiles(){
+  if(!window.caches) return;
+  const cache = await caches.open(TILE_CACHE), keys = await cache.keys();
+  if(keys.length <= 4000) return;
+  let extra = keys.length - 3000;
+  for(const k of keys){
+    if(extra <= 0) break;
+    if(prefetched.has(k.url) || k.url.endsWith('.json')) continue;
+    await cache.delete(k); extra--;
+  }
 }
 
 function ensureMap(){
@@ -1154,6 +1180,7 @@ function placeRoute(){
   endMarker.setLngLat(trip.dest).addTo(map);
   carMarker.setLngLat(trip.startPos).addTo(map);
   fittedVersion = null;
+  for(const k in mapSent) delete mapSent[k];   // ny resa: skicka alla linjer på nytt
   map.resize();
 }
 
@@ -1170,11 +1197,16 @@ function fitRoute(){
   map.fitBounds(b, {padding: pad, duration: 0, maxZoom: 14});
 }
 
+const mapSent = {};
+const lineKey = arr => { const a = arr.length ? arr[arr.length - 1] : null, b = arr[0]; const last = a && Array.isArray(a[0]) ? a[a.length - 1] : a; const first = b && Array.isArray(b[0]) ? b[0] : b;
+  return arr.length + ':' + (Array.isArray(a && a[0]) ? a.length : '') + ':' + (first || '') + ':' + (last || ''); };
+function setLine(id, key, data){ if(mapSent[id] === key) return; mapSent[id] = key; map.getSource(id).setData(data()); }
 function renderMap(S){
   if(!map || !map.getSource('done')) return;
-  map.getSource('done').setData(multi(S.runs));
-  map.getSource('guess').setData(S.guessed.length ? multi(S.guessed) : EMPTY);
-  map.getSource('route').setData(line(S.ahead));
+  if(!$('#gameOv').hidden){ mapSent.stale = true; return; }   // ett spel ligger över kartan: rita när det stängs
+  setLine('done', lineKey(S.runs), () => multi(S.runs));
+  setLine('guess', lineKey(S.guessed), () => S.guessed.length ? multi(S.guessed) : EMPTY);
+  setLine('route', lineKey(S.ahead), () => line(S.ahead));
   carMarker.setLngLat(S.pos);
   if(S.food){
     foodMarker.setLngLat(S.food.pos);
@@ -1358,16 +1390,22 @@ const GAMES = [
   {id: 'rakna', t: 'Räkna', i: '🔢', c: 'lugn'}, {id: 'farglagg', t: 'Färglägg', i: '🎨', c: 'lugn'},
   {id: 'prickar', t: 'Prick till prick', i: '✏️', c: 'lugn'}, {id: 'koppla', t: 'Koppla ihop', i: '🔗', c: 'lugn'},
   {id: 'klapadockan', t: 'Klä på dockan', i: '👗', c: 'lugn'}, {id: 'byggbilen', t: 'Bygg bilen', i: '🏎️', c: 'lugn'},
-  {id: 'husdjuret', t: 'Husdjuret', i: '🐣', c: 'lugn'},
+  {id: 'hanoi', t: 'Tornet', i: '🗼', c: 'lugn'}, {id: 'labyrint', t: 'Labyrinten', i: '🐭', c: 'lugn'},
+  {id: 'hittafelen', t: 'Hitta felen', i: '🔍', c: 'lugn'}, {id: 'tagbanan', t: 'Tågbanan', i: '🚂', c: 'lugn'},
+  {id: 'fiskdammen', t: 'Fiskdammen', i: '🎣', c: 'lugn'}, {id: 'klockan', t: 'Klockan', i: '🕒', c: 'lugn'},
+  // Husdjuret finns hela resan och ingår inte i turordningen.
+  {id: 'husdjuret', t: 'Husdjuret', i: '🐣', c: 'alltid'},
   {id: 'slangbellan', t: 'Slangbellan', i: '🎯', c: 'aktiv'}, {id: 'ballonger', t: 'Ballonger', i: '🎈', c: 'aktiv'},
   {id: 'helikoptern', t: 'Helikoptern', i: '🚁', c: 'aktiv'}, {id: 'kurragomma', t: 'Kurragömma', i: '🐹', c: 'aktiv'},
   {id: 'godis', t: 'Godisbyte', i: '🍬', c: 'aktiv'}, {id: 'parkera', t: 'Parkera', i: '🅿️', c: 'aktiv'},
   {id: 'musik', t: 'Musik', i: '🎹', c: 'aktiv'}, {id: 'panelen', t: 'Kontrollpanelen', i: '🎛️', c: 'aktiv'},
-  {id: 'masken', t: 'Masken', i: '🐛', c: 'aktiv'}, {id: 'murbrytaren', t: 'Murbrytaren', i: '🧱', c: 'aktiv'}
+  {id: 'masken', t: 'Masken', i: '🐛', c: 'aktiv'}, {id: 'murbrytaren', t: 'Murbrytaren', i: '🧱', c: 'aktiv'},
+  {id: 'pip', t: 'Pip', i: '🦊', c: 'aktiv'}, {id: 'fargminnet', t: 'Färgminnet', i: '🔴', c: 'aktiv'},
+  {id: 'papperskorgen', t: 'Papperskorgen', i: '🗑️', c: 'aktiv'}
 ];
 const gameById = id => GAMES.find(g => g.id === id);
 // Ändras spellistan ändras ordningen; versionen ingår i fröet och i kontrollkoden.
-const GAMES_VERSION = 2;
+const GAMES_VERSION = 11;
 const GSET_KEY = 'hur-langt-kvar-spel';
 let gset = {level: 'small', sound: true, on: true};
 try{ Object.assign(gset, JSON.parse(localStorage.getItem(GSET_KEY) || '{}')); }catch(e){}
@@ -1460,6 +1498,12 @@ function updateGames(T, S){
     const fresh = added;
     shelfKey = key;
     shelf.innerHTML = '';
+    // Husdjuret först, hela resan; sedan de två spel som just nu finns.
+    GAMES.filter(g => g.c === 'alltid').forEach(g => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'gbtn always';
+      b.innerHTML = `<span class="gi">${g.i}</span><span></span>`; b.lastChild.textContent = g.t;
+      b.setAttribute('aria-label', 'Spela ' + g.t); b.addEventListener('click', () => openGame(g.id)); shelf.append(b);
+    });
     avail.forEach((x, idx) => {
       const g = gameById(x.id), b = document.createElement('button');
       b.type = 'button'; b.className = 'gbtn' + (sleepy && idx === 0 ? ' sleepy' : '') + (x.id === fresh ? ' new' : '');

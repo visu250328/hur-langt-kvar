@@ -18,16 +18,17 @@
 .pn-mods .pn-tile.h2{height:calc(var(--t) * 2 + 8px)}
 .pn-plabel{align-self:flex-start;font-weight:800;font-size:.85rem;letter-spacing:1px;color:#fff;background:#1D2842;border-radius:8px;padding:3px 12px}
 .pn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--t,112px),1fr));grid-auto-rows:var(--t,112px);grid-auto-flow:dense;gap:10px}
-.pn-board{--t:88px}
-.pn-board:not(.pn-small) .pn-tile > *{transform:scale(.86)}
-.pn-board.pn-small{--t:118px}
+.pn-board{--t:86px;--s:.86;--s2:1.05}
+.pn-board .pn-tile > *{transform:scale(var(--s))}
+.pn-board .pn-tile > .pn-power{transform:scale(calc(var(--s) * .84))}
+.pn-board .pn-tile.h2:not(.w2) > *{transform:scale(calc(var(--s) * .95))}
 .pn-tile{position:relative;border-radius:16px;background:linear-gradient(160deg,#d9dde3,#b9bec6);box-shadow:inset 0 0 0 3px #8a929c,0 3px 0 #2e343c;
   display:flex;align-items:center;justify-content:center;gap:8px;touch-action:none;transition:box-shadow .2s}
 .pn-tile.w2{grid-column:span 2}.pn-tile.h2{grid-row:span 2}
 .pn-tile::before,.pn-tile::after{content:"";position:absolute;top:7px;width:7px;height:7px;border-radius:50%;background:#8a929c;box-shadow:inset 1px 1px 0 #5b6470}
 .pn-tile::before{left:7px}.pn-tile::after{right:7px}
 .pn-tile.hit{animation:pn-hit .8s ease-out}
-.pn-board.pn-small .pn-tile > *{transform:scale(1.15)}
+
 .pn-push{width:58px;height:58px;border-radius:14px;border:0;cursor:pointer;box-shadow:inset 0 -7px 0 rgba(0,0,0,.28),inset 0 3px 0 rgba(255,255,255,.35),0 0 0 4px #2e343c,0 4px 0 4px #1d2128;transition:transform .06s;font-size:1.5rem}
 .pn-push:active{transform:translateY(3px);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
 .pn-bulb{width:56px;height:56px;border-radius:50%;position:relative;background:radial-gradient(circle at 50% 55%,#8a929c,#5b6470);
@@ -47,7 +48,7 @@
 .pn-disp{font-family:ui-monospace,Menlo,monospace;font-size:2.2rem;font-weight:800;color:#5dfc7a;background:#0e1a12;border-radius:8px;padding:6px 16px;letter-spacing:8px;text-align:center;box-shadow:inset 0 0 0 3px #2e343c}
 .pn-slider{width:64px;height:190px;touch-action:none;cursor:pointer}
 .pn-bell.ring{animation:pn-ring .7s ease}
-.pn-secret{font-weight:800;background:#fff3c4;border-radius:999px;padding:4px 12px;box-shadow:inset 0 0 0 2px #f5c02e}
+.pn-secret{font-weight:800;background:#fff3c4;border-radius:999px;padding:4px 12px;box-shadow:inset 0 0 0 2px #f5c02e;color:#1D2842}
 .pn-secret.pop{animation:pn-pop .6s ease}
 @keyframes pn-pop{0%,100%{transform:scale(1)}40%{transform:scale(1.25)}}
 .pn-power{display:flex;flex-direction:column;align-items:center;gap:2px}
@@ -57,13 +58,26 @@
 .pn-fuse.trip i{background:#ff4a3a;box-shadow:0 0 14px 5px #ff4a3a}
 .pn-fuse.trip{animation:pn-glow 1s ease-in-out infinite}
 @keyframes pn-glow{0%,100%{box-shadow:inset 0 0 0 3px #1d2128,0 0 0 0 rgba(255,74,58,0)}50%{box-shadow:inset 0 0 0 3px #1d2128,0 0 18px 6px rgba(255,74,58,.8)}}
-.pn-board.dark .pn-out{filter:brightness(.5)}
+.pn-board.dark .pn-out,.pn-board.dark .pn-ring{filter:brightness(.5)}
+.pn-belt{width:184px;height:92px;display:block}
+.pn-l3{position:relative;width:62px;height:96px;cursor:pointer;touch-action:none;border-radius:14px;background:#2e343c;box-shadow:inset 0 0 0 3px #1d2128}
+.pn-l3 .slot{position:absolute;left:50%;top:12px;bottom:12px;width:10px;margin-left:-5px;border-radius:5px;background:#111}
+.pn-l3 .knob{position:absolute;left:50%;width:40px;height:26px;margin-left:-20px;border-radius:10px;background:linear-gradient(#ffd65a,#e0a91c);box-shadow:0 3px 0 #9c7410;transition:top .18s}
+.pn-l3 .lab{position:absolute;right:3px;font-size:11px;font-weight:900;color:#c9d1db;line-height:1}
+.pn-estop{width:96px;height:96px;border:0;background:none;padding:0;cursor:pointer}
+.pn-estop svg{width:100%;height:100%;display:block}
+.pn-estop.press .cap{animation:pn-press .35s ease}
+@keyframes pn-press{0%,100%{transform:translateY(0)}40%{transform:translateY(4px)}}
+.pn-sgrid{display:grid;grid-template-columns:repeat(var(--n),var(--t));grid-auto-rows:var(--t);gap:8px}
+.pn-sgrid .pn-tile.w2{grid-column:span 2}
+.pn-board .pn-tile.w2.h2 > .pn-knob{transform:scale(var(--s2))}
+.pn-tile > .pn-ring{position:absolute;inset:6%;width:88%;height:88%;transform:none!important;pointer-events:none}
 .pn-key2{width:84px;height:84px;cursor:pointer;border:0;background:none;padding:0}
 .pn-key2 .kk{transition:transform .25s ease}
 .pn-key2.on .kk{transform:rotate(90deg)}
 .pn-keytile.hint{animation:pn-hint 1.6s ease-in-out infinite}
 @keyframes pn-hint{0%,100%{box-shadow:inset 0 0 0 3px #8a929c,0 3px 0 #2e343c}50%{box-shadow:inset 0 0 0 3px #f5c02e,0 0 14px 4px rgba(245,192,46,.7)}}
-.pn-done{position:absolute;left:50%;top:14%;transform:translateX(-50%);background:#fff;border-radius:16px;padding:10px 20px;font-weight:800;font-size:1.3rem;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;text-align:center}
+.pn-done{position:absolute;left:50%;top:14%;transform:translateX(-50%);background:#fff;border-radius:16px;padding:10px 20px;font-weight:800;font-size:1.3rem;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;text-align:center;color:#1D2842}
 .pn-done.on{opacity:1}
 .pn button:focus-visible,.pn [tabindex]:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @keyframes pn-hit{0%{box-shadow:inset 0 0 0 3px #8a929c,0 0 0 0 #fff8b0}30%{box-shadow:inset 0 0 0 3px #f5c02e,0 0 0 8px #fff8b0}100%{box-shadow:inset 0 0 0 3px #8a929c,0 0 0 0 rgba(255,248,176,0)}}
@@ -89,7 +103,7 @@
     }
     root.innerHTML = '';
     const el = document.createElement('div'); el.className = 'pn';
-    el.innerHTML = `<div class="pn-top"><div class="pn-title">Kontrollpanelen</div><div class="pn-secret" aria-live="polite"></div><button type="button" class="pn-btn" data-a="off">Stäng av allt</button></div>
+    el.innerHTML = `<div class="pn-top"><div class="pn-title">Kontrollpanelen</div><div class="pn-secret" aria-live="polite"></div></div>
       <div class="pn-board"><div class="pn-mods"></div></div><div class="pn-done" aria-live="polite">Du har provat allt! 🎉</div>`;
     root.append(el);
     const board = el.querySelector('.pn-board'), doneEl = el.querySelector('.pn-done');
@@ -294,8 +308,8 @@
       b.addEventListener('click', () => { onPress(); use(label); }); t.append(b); controls++; return {t, reset(){}};
     }
     // Vred: dra runt, eller tryck för ett steg i taget (efter sista läget börjar det om från noll).
-    function ctlKnob(steps, label, onChange){
-      const t = ctile(), s = document.createElementNS(SVGNS, 'svg');
+    function ctlKnob(steps, label, onChange, tileCls){
+      const t = ctile(tileCls), s = document.createElementNS(SVGNS, 'svg');
       s.setAttribute('viewBox', '0 0 100 100'); s.setAttribute('class', 'pn-knob'); s.setAttribute('role', 'slider'); s.setAttribute('aria-label', label); s.setAttribute('tabindex', '0');
       const ang = i => -135 + i * 270 / (steps - 1);
       s.innerHTML = Array.from({length: steps}, (_, i) => { const a = (ang(i) - 90) * Math.PI / 180; return `<circle cx="${(50 + Math.cos(a) * 46).toFixed(1)}" cy="${(50 + Math.sin(a) * 46).toFixed(1)}" r="3.5" fill="#1D2842"/>`; }).join('')
@@ -369,6 +383,93 @@
       t.append(b); show(false);
       return {t, set: show, hint(){ t.classList.remove('hint'); void t.offsetWidth; hit(t); t.classList.add('hint'); }, reset(){ show(false); }};
     }
+    // Ljushjulet: tio färgade lysdioder i en ring runt vredet. Ett ljus i taget går runt; ju längre vredet
+    // är vridet, desto fortare. Ringen ritas i vredets bricka (2 × 2).
+    const RING = ['#ff4a3a', '#ff8a2e', '#ffd23a', '#9be33a', '#3fe06a', '#2fd6c0', '#3b8bff', '#6a5bff', '#b45bff', '#ff5bb4'];
+    const RING_MS = [0, 520, 330, 210, 130, 75];   // tid per steg för läge 0–5
+    function outRing(t){
+      const s = document.createElementNS(SVGNS, 'svg');
+      s.setAttribute('viewBox', '0 0 200 200'); s.setAttribute('class', 'pn-ring'); s.setAttribute('aria-hidden', 'true');
+      s.innerHTML = RING.map((c, i) => { const a = (i * 36 - 90) * Math.PI / 180, x = (100 + Math.cos(a) * 82).toFixed(1), y = (100 + Math.sin(a) * 82).toFixed(1);
+        return `<circle cx="${x}" cy="${y}" r="13" fill="#2e343c"/><circle class="led" cx="${x}" cy="${y}" r="9.5" fill="${c}" opacity=".22"/>`; }).join('');
+      t.prepend(s);
+      const leds = s.querySelectorAll('.led');
+      let lv = 0, idx = -1, acc = 0, last = 0;
+      const light = i => leds.forEach((l, j) => { l.setAttribute('opacity', j === i ? '1' : '.22'); l.style.filter = j === i ? `drop-shadow(0 0 6px ${RING[j]})` : ''; });
+      return {t, level: () => lv,
+        set(v){ if(v === lv) return; lv = v; hit(t); if(!v){ idx = -1; light(-1); } else if(idx < 0){ idx = 0; light(0); } },
+        run(tt){ const dt = Math.min(200, tt - (last || tt)); last = tt; if(!lv) return; acc += dt;
+          while(acc >= RING_MS[lv]){ acc -= RING_MS[lv]; idx = (idx + 1) % RING.length; light(idx); if(opts.sound && idx === 0) tone(880, 0.04, 'sine', 0.03); } },
+        reset(){ lv = 0; idx = -1; acc = 0; light(-1); }};
+    }
+    // Nödstoppet: stänger av alla reglage och bryter strömmen (nyckeln till AV). Räknas inte bland
+    // reglagen man ska prova, och fungerar alltid, även när strömmen redan är av.
+    function ctlEstop(onPress){
+      const t = ctile('pn-estoptile'), b = document.createElement('button'); b.type = 'button'; b.className = 'pn-estop'; b.setAttribute('aria-label', 'Nödstopp');
+      b.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="#f5c02e" stroke="#c9930a" stroke-width="3"/>
+        <path id="pn-es-arc" d="M18 50 A32 32 0 0 1 82 50" fill="none"/><text font-size="11" font-weight="900" fill="#1D2842" letter-spacing="1"><textPath href="#pn-es-arc" startOffset="50%" text-anchor="middle">NÖDSTOPP</textPath></text>
+        <circle cx="50" cy="58" r="26" fill="#8a1c14"/><circle class="cap" cx="50" cy="55" r="26" fill="#e8302a"/><ellipse class="cap" cx="43" cy="47" rx="10" ry="6" fill="#ff8a80" opacity=".7"/></svg>`;
+      b.addEventListener('click', () => { b.classList.remove('press'); void b.offsetWidth; b.classList.add('press'); onPress(); });
+      t.append(b);
+      return {t, reset(){}};
+    }
+    // Transportbandet: sex saker flyttas mellan två lådor. Framåt tas en sak i taget ur vänster låda och
+    // åker till höger låda; bakåt tvärtom. Antalet saker är alltid sex.
+    const BELT_ITEMS = ['📦', '🍎', '⚽', '🧸', '🚗', '🎁'];
+    function outBelt(){
+      const t = tile('w2'), s = document.createElementNS(SVGNS, 'svg');
+      s.setAttribute('viewBox', '0 0 200 100'); s.setAttribute('class', 'pn-belt'); s.setAttribute('aria-hidden', 'true');
+      s.innerHTML = `<rect x="2" y="44" width="40" height="48" rx="5" fill="#8a5a2b" stroke="#5b3a1a" stroke-width="3"/><rect x="158" y="44" width="40" height="48" rx="5" fill="#8a5a2b" stroke="#5b3a1a" stroke-width="3"/>
+        <g class="binL"></g><g class="binR"></g>
+        <rect x="40" y="70" width="120" height="16" rx="8" fill="#2e343c"/>
+        <line class="tread" x1="46" y1="71" x2="154" y2="71" stroke="#8a929c" stroke-width="3" stroke-dasharray="6 6"/>
+        ${[50, 100, 150].map(x => `<g class="roll" data-x="${x}"><circle cx="${x}" cy="78" r="6" fill="#b9bec6"/><line x1="${x - 5}" y1="78" x2="${x + 5}" y2="78" stroke="#4a525d" stroke-width="2"/></g>`).join('')}
+        <g class="items"></g>`;
+      t.append(s);
+      const itemsG = s.querySelector('.items'), binL = s.querySelector('.binL'), binR = s.querySelector('.binR'), tread = s.querySelector('.tread'), rolls = s.querySelectorAll('.roll');
+      let left = BELT_ITEMS.map((_, i) => i), right = [], belt = [], dir = 0, speed = 1, last = 0, off = 0, rot = 0, full = 'L';
+      const drawBin = (g, arr, x0) => { g.innerHTML = arr.map((i, k) => `<text x="${x0 + 10 + (k % 2) * 20}" y="${86 - Math.floor(k / 2) * 14}" font-size="15" text-anchor="middle">${BELT_ITEMS[i]}</text>`).join(''); };
+      const draw = () => { drawBin(binL, left, 2); drawBin(binR, right, 158); itemsG.innerHTML = belt.map(b => `<text x="${b.x.toFixed(1)}" y="68" font-size="18" text-anchor="middle">${BELT_ITEMS[b.i]}</text>`).join(''); };
+      draw();
+      return {t,
+        set(d, sp){ if(d === dir && sp === speed) return; dir = d; speed = sp; hit(t); },
+        run(tt){
+          const dt = Math.min(0.1, (tt - (last || tt)) / 1000); last = tt; if(!dir) return;
+          const v = 28 * speed * dir;
+          off -= v * dt; tread.setAttribute('stroke-dashoffset', off.toFixed(1));
+          rot += v * dt * 6; rolls.forEach(r => { const x = r.dataset.x; r.setAttribute('transform', `rotate(${rot.toFixed(0)} ${x} 78)`); });
+          belt.forEach(b => b.x += v * dt);
+          // Ny sak ur lådan när det finns plats på bandet.
+          if(dir > 0 && left.length && !belt.some(b => b.x < 76)){ belt.push({i: left.pop(), x: 46}); tone(500, 0.06, 'triangle', 0.05); }
+          if(dir < 0 && right.length && !belt.some(b => b.x > 124)){ belt.push({i: right.pop(), x: 154}); tone(500, 0.06, 'triangle', 0.05); }
+          // Framme vid änden: ramlar ned i lådan.
+          belt = belt.filter(b => {
+            if(b.x >= 158){ right.push(b.i); tone(300, 0.1, 'sine', 0.08); return false; }
+            if(b.x <= 42){ left.push(b.i); tone(300, 0.1, 'sine', 0.08); return false; }
+            return true;
+          });
+          draw();
+          const now = right.length === BELT_ITEMS.length ? 'R' : left.length === BELT_ITEMS.length ? 'L' : '';
+          if(now && now !== full){ [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.15, 'sine', 0.1, i * 0.09)); say(now === 'R' ? 'Allt är flyttat!' : 'Allt är tillbaka!'); hit(t); }
+          full = now;
+        },
+        power: () => dir ? 40 * speed : 0,
+        reset(){ dir = 0; }};
+    }
+    // Spak med tre lägen: framåt (överst), stopp (mitten), bakåt (nederst). Tryck högt, i mitten eller lågt.
+    function ctlLever3(label, onChange){
+      const t = ctile(), b = document.createElement('div'); b.className = 'pn-l3'; b.setAttribute('role', 'slider'); b.setAttribute('tabindex', '0'); b.setAttribute('aria-label', label);
+      b.innerHTML = '<div class="slot"></div><span class="lab" style="top:8px">▶</span><span class="lab" style="top:43px">■</span><span class="lab" style="bottom:8px">◀</span><div class="knob"></div>';
+      t.append(b); controls++;
+      let pos = 1;   // 0 = framåt, 1 = stopp, 2 = bakåt
+      const knob = b.querySelector('.knob'), names = ['framåt', 'stopp', 'bakåt'];
+      const show = () => { knob.style.top = [8, 35, 62][pos] + 'px'; b.setAttribute('aria-valuenow', 1 - pos); b.setAttribute('aria-valuetext', names[pos]); };
+      const setPos = (p, quiet) => { if(p === pos) return; pos = p; show(); if(!quiet){ tone(pos === 1 ? 160 : 220, 0.1, 'square', 0.06); onChange([1, 0, -1][pos]); use(label); } };
+      b.addEventListener('pointerdown', e => { e.preventDefault(); const r = b.getBoundingClientRect(), y = (e.clientY - r.top) / r.height; setPos(y < 0.36 ? 0 : y > 0.64 ? 2 : 1); });
+      b.addEventListener('keydown', e => { if(e.key === 'ArrowUp') setPos(Math.max(0, pos - 1)); if(e.key === 'ArrowDown') setPos(Math.min(2, pos + 1)); });
+      show();
+      return {t, reset(){ setPos(1, true); }};
+    }
     function ctlKeypad(label, onKey){
       const t = ctile('w2 h2'), g = document.createElement('div'); g.style.cssText = 'display:grid;grid-template-columns:repeat(3,44px);gap:6px';
       [1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, '✓'].forEach(k => {
@@ -400,7 +501,7 @@
     function build(){
       tiles.forEach(t => t.remove()); tiles = []; outTiles = []; ctlTiles = []; spin = []; sounds.forEach(s => s.set(0)); sounds = []; resets = []; controls = 0; used = new Set(); allDone = false;
       const nBulbs = big ? 6 : 4, nPush = big ? 4 : 2;
-      S = {key: false, push: new Array(nPush).fill(false), sw: [false, false], fan: 0, lever: false, slider: 0, gknob: 0, codeUntil: 0, tripped: false};
+      S = {key: false, push: new Array(nPush).fill(false), sw: [false, false], fan: 0, ring: 0, belt: 0, bspeed: 1, lever: false, slider: 0, gknob: 0, codeUntil: 0, tripped: false};
       O = {bulbs: LAMP.slice(0, nBulbs).map(c => outBulb(c))};
       O.fan = outFan(); O.beacon = outBeacon(); O.bell = outBell(); O.traffic = outTraffic();
       if(big){ O.gears = outGears(); O.leds = outLeds(); O.gauge = outGauge(); O.disp = outDisplay(); }
@@ -427,12 +528,28 @@
       ctls.push(ctlBig('Stora röda knappen', () => { if(!ok()) return dead(); O.beacon.fire(); update(); }));
       ctls.push(ctlPush(btnCols[nPush], 'Knapp ' + (nPush + 1), () => { if(!ok()) return dead(); O.bell.ring(); }));
       ctls.push(ctlPush(btnCols[nPush + 1], 'Knapp ' + (nPush + 2), () => { if(!ok()) return dead(); O.traffic.next(); update(); }));
+      const estopCtl = ctlEstop(() => {
+        allOff(false);
+        const a = ctx(); if(a){ const t0 = a.currentTime; tone(120, 0.2, 'square', 0.12); const o = a.createOscillator(), g = a.createGain(); o.type = 'sawtooth';
+          o.frequency.setValueAtTime(600, t0); o.frequency.exponentialRampToValueAtTime(60, t0 + 0.6); g.gain.setValueAtTime(0.08, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.65);
+          o.connect(g).connect(master); o.start(t0); o.stop(t0 + 0.7); }
+        say('Nödstopp! Allt är avstängt.');
+      });
+      const ringCtl = ctlKnob(6, 'Ljushjulets vred', v => { S.ring = v; if(!ok()) return dead(); update(); }, 'w2 h2');
+      O.ring = outRing(ringCtl.t);
+      ctls.push(ringCtl);
+      O.belt = outBelt();
+      const beltCtl = ctlLever3('Transportbandets spak', d => { S.belt = d; if(!ok()) return dead(); update(); });
+      ctls.push(beltCtl);
+      const beltSpeedCtl = big ? ctlKnob(3, 'Transportbandets fart', v => { S.bspeed = v + 1; if(!ok()) return dead(); update(); }) : null;
+      if(beltSpeedCtl) ctls.push(beltSpeedCtl);
       if(big){
         ctls.push(ctlLever('Spak', on => { S.lever = on; if(!ok()) return dead(); update(); }));
         ctls.push(ctlSlider(O.leds.N, 'Reglage', v => { S.slider = v; if(!ok()) return dead(); update(); }));
         ctls.push(ctlKnob(6, 'Vred med sex lägen', v => { S.gknob = v; if(!ok()) return dead(); update(); }));
         ctls.push(ctlKeypad('Knappsats', k => { if(!ok()) return dead(); O.disp.key(k); update(); }));
-        fuseCtl = ctlFuse(() => { S.tripped = false; fuseCtl.trip(false); [392, 523, 659].forEach((f, i) => tone(f, 0.15, 'sine', 0.1, i * 0.08)); say('Strömmen är tillbaka!'); update(); });
+        // När säkringen slås på igen är alla reglage av, så att inget startar av sig självt.
+        fuseCtl = ctlFuse(() => { allOff(true); fuseCtl.trip(false); [392, 523, 659].forEach((f, i) => tone(f, 0.15, 'sine', 0.1, i * 0.08)); say('Strömmen är tillbaka! Allt är avslaget.'); });
         ctls.push(fuseCtl);
       }
       // Varje sak sitter ihop med sitt reglage i en modul. Lamporna ligger på en rad med sina
@@ -444,21 +561,27 @@
         const row = document.createElement('div'); row.className = 'pn-mrow'; tiles.forEach(t => row.append(t)); m.append(row);
         modsEl.append(m); return m;
       };
-      mod('STRÖM', [keyCtl.t, O.power.t].concat(big ? [fuseCtl.t] : []));
+      // STRÖM i två rader: nyckel, kraftmätare (och säkring) överst, nödstoppet under nyckeln.
+      const sm = mod('STRÖM', []), sg = document.createElement('div'); sg.className = 'pn-sgrid'; sg.style.setProperty('--n', big ? 4 : 3);
+      [keyCtl.t, O.power.t].concat(big ? [fuseCtl.t] : [], [estopCtl.t]).forEach(t => sg.append(t));
+      sm.querySelector('.pn-mrow').replaceWith(sg);
       const lm = document.createElement('div'); lm.className = 'pn-mod2'; lm.innerHTML = '<div class="pn-plabel">LAMPOR</div>';
       const lg = document.createElement('div'); lg.className = 'pn-lgrid'; lg.style.setProperty('--n', nBulbs);
       O.bulbs.forEach(b => lg.append(b.t)); ctls.slice(0, nBulbs).forEach(c => lg.append(c.t));
       lm.append(lg); modsEl.append(lm);
-      const C = ctls.slice(nBulbs);   // vred, röda knappen, klockans knapp, trafikljusets knapp, [spak, reglage, vred, knappsats]
+      if(!big) mod('LJUSHJULET', [ringCtl.t]);   // liten nivå: på första raden, bredvid lamporna
+      const C = ctls.slice(nBulbs).filter(c => c !== ringCtl && c !== beltCtl && c !== beltSpeedCtl);   // vred, röda knappen, klockans knapp, trafikljusets knapp, [spak, reglage, vred, knappsats]
       mod('FLÄKTEN', [O.fan.t, C[0].t]);
       mod('VARNINGSLJUSET', [O.beacon.t, C[1].t]);
       mod('KLOCKAN', [O.bell.t, C[2].t]);
       mod('TRAFIKLJUSET', [O.traffic.t, C[3].t]);
+      mod('TRANSPORTBANDET', [O.belt.t, beltCtl.t].concat(beltSpeedCtl ? [beltSpeedCtl.t] : []));
       if(big){
         mod('KUGGHJULEN', [O.gears.t, C[4].t]);
         mod('LYSDIODERNA', [O.leds.t, C[5].t]);
         mod('VISAREN', [O.gauge.t, C[6].t]);
         mod('DISPLAYEN', [O.disp.t, C[7].t]);
+        mod('LJUSHJULET', [ringCtl.t]);
       }
       resets.push(...Object.values(O).flat().map(o => () => o.reset()), ...ctls.map(c => () => c.reset()), () => keyCtl.reset());
       showSecrets(); update();
@@ -471,7 +594,7 @@
       const now = performance.now(), B = O.bulbs, nPush = S.push.length;
       board.classList.toggle('dark', S.tripped || !S.key);
       if(S.tripped || !S.key){
-        B.forEach(b => b.apply(false, b.base, false)); O.fan.level(0); O.fan.tint(''); O.beacon.police(false); O.traffic.dark(true);
+        B.forEach(b => b.apply(false, b.base, false)); O.fan.level(0); O.ring.set(0); O.belt.set(0, S.bspeed); O.fan.tint(''); O.beacon.police(false); O.traffic.dark(true);
         if(big){ O.gears.set(false); O.leds.setChase(false); O.leds.set(0); O.gauge.set(0); O.gauge.tremble(false); O.disp.dark(true); }
         O.power.set(0); return;
       }
@@ -500,15 +623,15 @@
         if(S.fan === 3 && S.push[1]){ police = true; discover('polis'); }
       }
       B.forEach((b, i) => b.apply(on[i], col[i], disco[i]));
-      O.fan.level(S.fan); O.fan.tint(green ? '#3fe06a' : '');
+      O.fan.level(S.fan); O.fan.tint(green ? '#3fe06a' : ''); O.ring.set(S.ring); O.belt.set(S.belt, S.bspeed);
       O.beacon.police(police);
       if(big){
         O.gears.set(S.lever); O.leds.set(S.slider); O.leds.setChase(chase); O.gauge.set(S.gknob / 5); O.gauge.tremble(chase);
       }
       // Kraften i watt: lampa 60, fläkt 40 per läge, varningsljus 100, trafikljus 30, kugghjul 150,
       // lysdiod 10 styck (ljusjakt 80), display 10.
-      let w = on.filter(Boolean).length * 60 + S.fan * 40 + (O.beacon.active() ? 100 : 0) + (tr >= 0 ? 30 : 0);
-      if(big) w += (S.lever ? 150 : 0) + (chase ? 80 : S.slider * 10) + (O.disp.used() ? 10 : 0);
+      let w = on.filter(Boolean).length * 60 + S.fan * 40 + S.ring * 30 + O.belt.power() + (O.beacon.active() ? 100 : 0) + (tr >= 0 ? 30 : 0);
+      if(big) w += (S.lever ? 150 : 0) + (chase ? 80 : S.slider * 10) + S.gknob * 20 + (O.disp.used() ? 10 : 0);
       O.power.set(w);
       if(big && w > LIMIT) trip();
     }
@@ -523,11 +646,26 @@
     }
 
     build();
-    el.querySelector('[data-a="off"]').addEventListener('click', () => {
+    // Brickornas storlek räknas ut efter skärmen: börja stort och krymp tills hela panelen ryms utan att
+    // rulla. Innehållet i brickorna skalas i samma takt (--s), och ljushjulets vred lite mer (--s2).
+    function fit(){
+      const maxT = big ? 110 : 132, minT = big ? 52 : 64, base = big ? 100 : 95.6;
+      const set = t => { board.style.setProperty('--t', t + 'px'); board.style.setProperty('--s', (t / base).toFixed(3)); board.style.setProperty('--s2', (t / 82).toFixed(3)); };
+      let t = maxT; set(t);
+      while(t > minT && (board.scrollHeight > board.clientHeight + 1 || board.scrollWidth > board.clientWidth + 1)){ t -= 2; set(t); }
+    }
+    fit();
+    let fitTimer = null;
+    const fitRO = window.ResizeObserver ? new ResizeObserver(() => { clearTimeout(fitTimer); fitTimer = setTimeout(fit, 120); }) : null;
+    if(fitRO) fitRO.observe(el);
+    // Alla reglage av. keepKey: nyckeln står kvar (efter säkringen), annars vrids även den till AV (nödstopp).
+    function allOff(keepKey){
+      const key = keepKey ? S.key : false;
       resets.forEach(r => r());
-      Object.assign(S, {key: false, push: S.push.map(() => false), sw: [false, false], fan: 0, lever: false, slider: 0, gknob: 0, codeUntil: 0, tripped: false});
-      update(); tone(400, 0.12, 'square', 0.06); tone(200, 0.2, 'square', 0.06, 0.1);
-    });
+      Object.assign(S, {key, push: S.push.map(() => false), sw: [false, false], fan: 0, ring: 0, belt: 0, bspeed: 1, lever: false, slider: 0, gknob: 0, codeUntil: 0, tripped: false});
+      keyCtl.set(key);
+      update();
+    }
 
     // Allt som snurrar: fläkt, varningsljus, kugghjul och visare, med mjuk start och stopp.
     let raf = 0, last = 0;
@@ -538,6 +676,8 @@
       if(O){
         O.bulbs.forEach((b, i) => { if(b.disco) b.el.style.setProperty('--c', `hsl(${(t / 6 + i * 60) % 360} 95% 60%)`); });
         if(O.leds) O.leds.run(t);
+        if(O.ring) O.ring.run(t);
+        if(O.belt) O.belt.run(t);
       }
       spin.forEach(s => {
         if(s.needle){ s.value += (s.target - s.value) * Math.min(1, dt * 4);
@@ -553,6 +693,7 @@
 
     return {
       stop(){
+        if(fitRO) fitRO.disconnect(); clearTimeout(fitTimer);
         cancelAnimationFrame(raf);
         resets.forEach(r => { try{ r(); }catch(e){} });
         try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}

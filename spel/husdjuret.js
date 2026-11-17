@@ -21,7 +21,7 @@
 .hd-pet.jump{animation:hd-jump .6s ease}
 .hd-pet.shake{animation:hd-shake .5s ease}
 .hd-pet.idle svg{animation:hd-breathe 3s ease-in-out infinite;transform-origin:50% 100%}
-.hd-bubble{position:absolute;left:64%;bottom:58%;background:#fff;border-radius:20px;padding:6px 12px;font-size:2rem;box-shadow:0 4px 10px rgba(0,0,0,.15);pointer-events:none;transition:opacity .4s}
+.hd-bubble{position:absolute;left:64%;bottom:58%;background:#fff;border-radius:20px;padding:6px 12px;font-size:2rem;box-shadow:0 4px 10px rgba(0,0,0,.15);pointer-events:none;transition:opacity .4s;color:#1D2842}
 .hd-bubble:empty{opacity:0}
 .hd-fly{position:absolute;font-size:3rem;transition:left .7s ease-in,top .7s ease-in,transform .7s;pointer-events:none;z-index:3}
 .hd-z{position:absolute;font-size:2rem;font-weight:900;color:#fff;animation:hd-z 2.5s linear forwards;pointer-events:none}
@@ -29,8 +29,8 @@
 .hd-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .hd-act{border:0;border-radius:20px;background:var(--card,#fff);color:inherit;font:inherit;font-weight:800;padding:8px 16px;display:flex;align-items:center;gap:8px;font-size:1.1rem;cursor:pointer;box-shadow:inset 0 0 0 3px var(--line,#C6D1DF)}
 .hd-act span{font-size:2rem;line-height:1}
-.hd-act[aria-pressed="true"]{box-shadow:inset 0 0 0 4px var(--accent,#2F6FD6);background:#e6f0ff}
-.hd-tray{position:absolute;left:50%;top:6%;transform:translateX(-50%);display:flex;gap:10px;background:rgba(255,255,255,.9);border-radius:20px;padding:8px 12px;z-index:2}
+.hd-act[aria-pressed="true"]{box-shadow:inset 0 0 0 4px var(--accent,#2F6FD6);background:#e6f0ff;color:#1D2842}
+.hd-tray{position:absolute;left:50%;top:6%;transform:translateX(-50%);display:flex;gap:10px;background:rgba(255,255,255,.9);border-radius:20px;padding:8px 12px;z-index:2;color:#1D2842}
 .hd-tray button{border:0;background:none;font-size:2.6rem;cursor:pointer;padding:2px 6px}
 .hd-ball{position:absolute;font-size:3rem;cursor:pointer;transition:left .6s ease,top .6s cubic-bezier(.3,1.6,.6,1);z-index:2}
 .hd-pick{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}

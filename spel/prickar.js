@@ -12,7 +12,7 @@
 .pp-pic.cur{box-shadow:0 0 0 3px var(--sky,#DCEAF6),0 0 0 6px var(--accent,#2F6FD6)}
 .pp-new{border:2px solid var(--line,#C6D1DF);background:var(--card,#fff);color:inherit;font:inherit;font-weight:700;border-radius:999px;padding:5px 14px;cursor:pointer}
 .pp-new.sure{background:var(--done,#F2B33D);border-color:var(--done,#F2B33D);color:#2B1E00}
-.pp-board{flex:1;min-height:0;display:grid;place-items:center;background:var(--card,#fff);border-radius:24px;box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);position:relative;overflow:hidden;touch-action:none}
+.pp-board{flex:1;min-height:0;display:grid;place-items:center;background:#fff;color:#1D2842;border-radius:24px;box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);position:relative;overflow:hidden;touch-action:none}
 .pp-board svg{width:96%;height:96%;touch-action:none;transition:height .6s ease,margin .6s ease}
 .pp-board.won svg{height:74%;margin-bottom:22%}
 .pp-dot{transition:r .2s}
@@ -46,7 +46,17 @@
       {name: 'Ett hjärta', fill: '#e8473c', pts: [[200,92],[240,56],[290,56],[322,96],[306,152],[200,252],[94,152],[78,96],[110,56],[160,56]],
        details: '<path d="M120 90 Q130 70 150 72" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round" opacity=".7"/>'},
       {name: 'En bil', fill: '#3b7fe0', pts: [[60,212],[60,162],[110,150],[150,108],[262,108],[302,150],[342,162],[342,212]],
-       details: '<path d="M160 116 L200 116 L200 150 L124 150 Z M210 116 L256 116 L290 150 L210 150 Z" fill="#bfe6ff" stroke="#222" stroke-width="3" stroke-linejoin="round"/><circle cx="120" cy="214" r="26" fill="#222"/><circle cx="120" cy="214" r="11" fill="#aaa"/><circle cx="284" cy="214" r="26" fill="#222"/><circle cx="284" cy="214" r="11" fill="#aaa"/><circle cx="336" cy="174" r="7" fill="#fff6b0" stroke="#222" stroke-width="2"/>'}
+       details: '<path d="M160 116 L200 116 L200 150 L124 150 Z M210 116 L256 116 L290 150 L210 150 Z" fill="#bfe6ff" stroke="#222" stroke-width="3" stroke-linejoin="round"/><circle cx="120" cy="214" r="26" fill="#222"/><circle cx="120" cy="214" r="11" fill="#aaa"/><circle cx="284" cy="214" r="26" fill="#222"/><circle cx="284" cy="214" r="11" fill="#aaa"/><circle cx="336" cy="174" r="7" fill="#fff6b0" stroke="#222" stroke-width="2"/>'},
+      {name: 'En glass', fill: '#ff9ac0', pts: [[200,262],[155,150],[130,118],[150,70],[200,52],[250,70],[270,118],[245,150]],
+       details: '<path d="M155 150 L245 150 L200 262 Z" fill="#e0a85a" stroke="#222" stroke-width="4" stroke-linejoin="round"/><path d="M170 160 L215 230 M200 160 L225 200 M230 160 L187 228 M200 160 L175 200" stroke="#a8742c" stroke-width="3"/><circle cx="200" cy="44" r="12" fill="#e8302a" stroke="#222" stroke-width="3"/><g fill="#fff"><rect x="165" y="95" width="10" height="4" rx="2" transform="rotate(30 170 97)"/><rect x="222" y="88" width="10" height="4" rx="2"/><rect x="195" y="120" width="10" height="4" rx="2" transform="rotate(-30 200 122)"/></g><g fill="#3b7fe0"><rect x="238" y="112" width="10" height="4" rx="2" transform="rotate(20 243 114)"/><rect x="180" y="72" width="10" height="4" rx="2"/></g>'},
+      {name: 'Ett äpple', fill: '#e8302a', pts: [[200,96],[258,72],[310,128],[292,218],[232,258],[168,258],[108,218],[90,128],[142,72]],
+       details: '<path d="M200 96 Q198 70 210 50" stroke="#6b3a1a" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M210 62 Q238 40 262 56 Q238 76 210 62 Z" fill="#43b55a" stroke="#222" stroke-width="3"/><path d="M130 130 Q135 105 155 98" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round" opacity=".6"/>'},
+      {name: 'En ballong', fill: '#3b7fe0', pts: [[200,40],[262,62],[292,125],[268,192],[215,236],[185,236],[132,192],[108,125],[138,62]],
+       details: '<path d="M200 236 L190 252 L210 252 Z" fill="#3b7fe0" stroke="#222" stroke-width="3" stroke-linejoin="round"/><path d="M200 252 Q186 268 202 280 Q216 290 204 298" stroke="#222" stroke-width="3" fill="none"/><path d="M150 100 Q160 72 185 62" stroke="#fff" stroke-width="10" fill="none" stroke-linecap="round" opacity=".6"/>'},
+      {name: 'En tulpan', fill: '#ff7ab0', pts: [[150,70],[176,112],[200,60],[224,112],[250,70],[258,150],[200,188],[142,150]],
+       details: '<path d="M200 188 L200 290" stroke="#3c9a3c" stroke-width="8"/><path d="M200 270 Q150 250 140 210 Q180 220 200 255 Z M200 250 Q250 232 262 196 Q222 205 200 238 Z" fill="#43b55a" stroke="#222" stroke-width="3" stroke-linejoin="round"/><path d="M176 112 L200 150 L224 112" stroke="#d64f8a" stroke-width="3" fill="none"/>'},
+      {name: 'En gran', fill: '#2f8a3f', pts: [[200,30],[262,105],[228,105],[290,190],[110,190],[172,105],[138,105]],
+       details: '<rect x="185" y="190" width="30" height="45" fill="#8a5a2b" stroke="#222" stroke-width="3"/><g stroke="#222" stroke-width="2"><circle cx="190" cy="150" r="8" fill="#e8302a"/><circle cx="235" cy="170" r="8" fill="#f5c02e"/><circle cx="160" cy="175" r="8" fill="#3b7fe0"/><circle cx="215" cy="90" r="7" fill="#f5c02e"/></g><path d="M200 12 L206 26 L221 26 L209 35 L214 50 L200 41 L186 50 L191 35 L179 26 L194 26 Z" fill="#f5c02e" stroke="#222" stroke-width="2"/>'},
     ],
     big: [
       {name: 'En raket', fill: '#d9dde3', pts: [[200,30],[225,70],[230,190],[265,225],[265,258],[230,240],[220,262],[180,262],[170,240],[135,258],[135,225],[170,190],[175,70]],
@@ -58,7 +68,15 @@
       {name: 'En dinosaurie', fill: '#43b55a', pts: [[40,200],[110,170],[170,140],[240,140],[270,110],[290,60],[310,45],[340,50],[345,65],[315,72],[300,120],[290,170],[285,250],[260,250],[250,205],[195,205],[190,250],[165,250],[160,200],[110,195]],
        details: '<circle cx="322" cy="56" r="4.5" fill="#222"/><path d="M332 66 q6 3 10 0" stroke="#222" stroke-width="2.5" fill="none"/><g fill="#2f8a3f">' + [[140,165],[175,150],[210,148],[245,150],[268,125]].map(([x,y]) => `<circle cx="${x}" cy="${y + 12}" r="8"/>`).join('') + '</g><path d="M175 160 q60 30 110 0" stroke="#8bd25f" stroke-width="14" fill="none" opacity=".6"/>'},
       {name: 'En fjäril', fill: '#9a5bd6', pts: [[200,90],[240,50],[320,40],[340,90],[300,145],[330,190],[300,250],[230,220],[200,170],[170,220],[100,250],[70,190],[100,145],[60,90],[80,40],[160,50]],
-       details: '<g fill="#f5c02e" stroke="#222" stroke-width="2"><circle cx="280" cy="90" r="20"/><circle cx="120" cy="90" r="20"/><circle cx="275" cy="200" r="14"/><circle cx="125" cy="200" r="14"/></g><g fill="#ff8fb7"><circle cx="300" cy="70" r="7"/><circle cx="100" cy="70" r="7"/></g><path d="M200 70 L200 200" stroke="#2a2421" stroke-width="14" stroke-linecap="round"/><path d="M196 72 q-14 -30 -26 -34 M204 72 q14 -30 26 -34" stroke="#2a2421" stroke-width="3" fill="none" stroke-linecap="round"/>'}
+       details: '<g fill="#f5c02e" stroke="#222" stroke-width="2"><circle cx="280" cy="90" r="20"/><circle cx="120" cy="90" r="20"/><circle cx="275" cy="200" r="14"/><circle cx="125" cy="200" r="14"/></g><g fill="#ff8fb7"><circle cx="300" cy="70" r="7"/><circle cx="100" cy="70" r="7"/></g><path d="M200 70 L200 200" stroke="#2a2421" stroke-width="14" stroke-linecap="round"/><path d="M196 72 q-14 -30 -26 -34 M204 72 q14 -30 26 -34" stroke="#2a2421" stroke-width="3" fill="none" stroke-linecap="round"/>'},
+      {name: 'Ett lok', fill: '#e8473c', pts: [[60,240],[60,100],[40,80],[170,80],[150,100],[150,140],[240,140],[240,95],[220,65],[300,65],[280,95],[280,140],[330,140],[355,200],[360,240]],
+       details: '<rect x="80" y="110" width="50" height="40" rx="5" fill="#bfe6ff" stroke="#222" stroke-width="3"/><path d="M180 140 v100 M215 140 v100" stroke="#a82e24" stroke-width="5"/><g fill="#2a2a2a" stroke="#222" stroke-width="3"><circle cx="110" cy="244" r="26"/><circle cx="210" cy="250" r="20"/><circle cx="295" cy="250" r="20"/></g><g fill="#f5c02e"><circle cx="110" cy="244" r="8"/><circle cx="210" cy="250" r="6"/><circle cx="295" cy="250" r="6"/></g><circle cx="345" cy="160" r="9" fill="#f5c02e" stroke="#222" stroke-width="3"/><g fill="#e6e9ee" stroke="#9aa4b0" stroke-width="2"><circle cx="262" cy="42" r="16"/><circle cx="288" cy="26" r="12"/><circle cx="310" cy="14" r="9"/></g>'},
+      {name: 'Ett slott', fill: '#c9ced6', pts: [[60,260],[60,120],[90,45],[120,120],[120,165],[150,165],[150,132],[185,132],[185,165],[215,165],[215,132],[250,132],[250,165],[280,165],[280,120],[310,45],[340,120],[340,260]],
+       details: '<path d="M60 120 L90 45 L120 120 Z M280 120 L310 45 L340 120 Z" fill="#3b7fe0" stroke="#222" stroke-width="4" stroke-linejoin="round"/><path d="M90 45 V22 L112 30 L90 38 M310 45 V22 L332 30 L310 38" stroke="#222" stroke-width="3" fill="#e8302a"/><path d="M175 260 V215 Q200 185 225 215 V260 Z" fill="#8a5a2b" stroke="#222" stroke-width="3"/><g fill="#5b6470"><rect x="80" y="150" width="20" height="30" rx="10"/><rect x="300" y="150" width="20" height="30" rx="10"/><rect x="190" y="180" width="20" height="16" rx="8"/></g>'},
+      {name: 'En krona', fill: '#f5c02e', pts: [[70,240],[70,100],[115,160],[140,80],[170,150],[200,60],[230,150],[260,80],[285,160],[330,100],[330,240],[265,250],[200,256],[135,250]],
+       details: '<rect x="70" y="205" width="260" height="22" fill="#e0a800" stroke="#222" stroke-width="3"/><g stroke="#222" stroke-width="3"><circle cx="135" cy="216" r="9" fill="#e8302a"/><circle cx="200" cy="216" r="11" fill="#3b7fe0"/><circle cx="265" cy="216" r="9" fill="#43b55a"/><circle cx="140" cy="80" r="8" fill="#fff"/><circle cx="200" cy="60" r="9" fill="#ff7ab0"/><circle cx="260" cy="80" r="8" fill="#fff"/></g>'},
+      {name: 'En robot', fill: '#9aa4b0', pts: [[150,60],[250,60],[250,125],[220,125],[220,155],[290,155],[330,200],[310,218],[285,192],[285,255],[115,255],[115,192],[90,218],[70,200],[110,155],[180,155],[180,125],[150,125]],
+       details: '<path d="M200 60 V32" stroke="#222" stroke-width="4"/><circle cx="200" cy="26" r="9" fill="#e8302a" stroke="#222" stroke-width="3"/><g fill="#9fd6ff" stroke="#222" stroke-width="3"><circle cx="178" cy="88" r="11"/><circle cx="222" cy="88" r="11"/></g><rect x="176" y="106" width="48" height="10" rx="3" fill="#2a2a2a"/><path d="M188 106 v10 M200 106 v10 M212 106 v10" stroke="#9aa4b0" stroke-width="2"/><rect x="150" y="175" width="100" height="55" rx="8" fill="#d9dde3" stroke="#222" stroke-width="3"/><g stroke="#222" stroke-width="2"><circle cx="175" cy="200" r="8" fill="#43b55a"/><circle cx="200" cy="200" r="8" fill="#f5c02e"/><circle cx="225" cy="200" r="8" fill="#e8302a"/></g>'},
     ]
   };
   const HINT_MS = 5000;
@@ -130,6 +148,7 @@
     }
 
     function load(i){
+      doneTimers.forEach(clearTimeout); doneTimers = [];   // avbryt färgläggning och slutruta från förra gången
       prog.current = i; save(); renderPics();
       P = LIST[i]; next = 1; finished = false;
       endEl.classList.remove('on'); board.classList.remove('won');
@@ -208,11 +227,13 @@
       linesG.append(l);
     }
 
+    let doneTimers = [];
+    const later = (fn, ms) => doneTimers.push(setTimeout(fn, ms));
     function complete(){
       finished = true; clearTimeout(hintTimer);
       addLine(P.pts[P.pts.length - 1], P.pts[0]);       // stäng figuren
       mark();
-      setTimeout(() => {
+      later(() => {
         svg.querySelector('.pp-color').classList.add('on');
         dotsG.classList.add('fade');
         tone([523, 659, 784, 1047]);
@@ -221,30 +242,33 @@
       prog.done[prog.current] = true; save(); renderPics();
       const last = prog.current === LIST.length - 1;
       endEl.querySelector('.big').textContent = P.name + '!';
-      setTimeout(() => board.classList.add('won'), 1200);
+      later(() => board.classList.add('won'), 1200);
       endEl.querySelector('button').textContent = last ? 'Börja om från bild 1' : 'Nästa bild';
-      setTimeout(() => endEl.classList.add('on'), 1300);
+      later(() => endEl.classList.add('on'), 1300);
       if(typeof opts.onFinish === 'function') opts.onFinish();
     }
 
     endEl.querySelector('button').addEventListener('click', () => load((prog.current + 1) % LIST.length));
-    let sureTimer = null;
-    function resetBtn(){ clearTimeout(sureTimer); newBtn.classList.remove('sure'); newBtn.textContent = 'Börja om'; }
+    // Börja om: ett tryck rensar bilden. Var bilden påbörjad blir knappen Ångra i 4 sekunder,
+    // så att ett barn som råkar trycka kan få tillbaka sina streck.
+    let sureTimer = null, undoNext = 0;
+    function resetBtn(){ clearTimeout(sureTimer); undoNext = 0; newBtn.classList.remove('sure'); newBtn.textContent = 'Börja om'; }
     newBtn.addEventListener('click', () => {
-      if(finished || next === 1){ resetBtn(); load(prog.current); return; }
-      if(!newBtn.classList.contains('sure')){
-        newBtn.classList.add('sure'); newBtn.textContent = 'Tryck igen för att börja om';
-        sureTimer = setTimeout(resetBtn, 3000);
-        return;
+      if(undoNext){
+        const n = undoNext; resetBtn(); load(prog.current);
+        for(let k = 2; k < n; k++) addLine(P.pts[k - 2], P.pts[k - 1]);
+        next = n; mark(); tone([523, 659], 0.06); return;
       }
-      resetBtn(); load(prog.current);
+      const was = !finished && next > 1 ? next : 0;
+      resetBtn(); load(prog.current); tone([440, 330], 0.06);
+      if(was){ undoNext = was; newBtn.classList.add('sure'); newBtn.textContent = '↩ Ångra'; sureTimer = setTimeout(resetBtn, 4000); }
     });
 
     load(prog.current);
 
     return {
       stop(){
-        clearTimeout(hintTimer); clearTimeout(sureTimer);
+        clearTimeout(hintTimer); clearTimeout(sureTimer); doneTimers.forEach(clearTimeout);
         try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
         try{ if(ac) ac.close(); }catch(e){}
         root.innerHTML = '';

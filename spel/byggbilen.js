@@ -34,17 +34,17 @@
 .bg.driving .bg-panel,.bg.driving [data-a="types"],.bg.driving [data-a="done"],.bg.driving [data-a="drive"]{display:none}
 .bg:not(.driving) [data-a="garage"],.bg:not(.driving) [data-a="night"],.bg:not(.driving) .bg-brake{display:none}
 .bg-mini b.ic{font-weight:400}
-.bg-mini[data-a="fill"].on{background:#e6f3ff;box-shadow:inset 0 0 0 3px #2f6fd6}
+.bg-mini[data-a="fill"].on{background:#e6f3ff;box-shadow:inset 0 0 0 3px #2f6fd6;color:#1D2842}
 .bg-note{position:absolute;left:50%;top:5%;transform:translateX(-50%);background:#fff;color:#1D2842;font-weight:800;border-radius:14px;padding:8px 16px;box-shadow:0 4px 12px rgba(0,0,0,.18);
   opacity:0;transition:opacity .25s;pointer-events:none;text-align:center;max-width:90%;z-index:6}
 .bg-note.on{opacity:1}
 .bg-group{display:flex;gap:4px;padding:4px;border-radius:18px;background:var(--card,#fff);box-shadow:inset 0 0 0 2px var(--line,#C6D1DF)}
 .bg-mini{width:60px;height:60px;border:0;border-radius:14px;cursor:pointer;background:transparent;font:inherit;font-size:1.5rem;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:inherit}
 .bg-mini span{font-size:.62rem;font-weight:800}
-.bg-mini[aria-pressed="true"]{background:#fff3c4;box-shadow:inset 0 0 0 3px #f5c02e}
-.bg-mini.blink[aria-pressed="true"]{background:#e6f8ea;box-shadow:inset 0 0 0 3px #2fb553}
+.bg-mini[aria-pressed="true"]{background:#fff3c4;box-shadow:inset 0 0 0 3px #f5c02e;color:#1D2842}
+.bg-mini.blink[aria-pressed="true"]{background:#e6f8ea;box-shadow:inset 0 0 0 3px #2fb553;color:#1D2842}
 .bg-siren{width:72px;height:72px;border-radius:50%;border:0;cursor:pointer;font-size:2rem;background:var(--card,#fff);box-shadow:inset 0 0 0 3px var(--line,#C6D1DF)}
-.bg-siren[aria-pressed="true"]{box-shadow:inset 0 0 0 4px #2f6fd6;background:#dce9ff}
+.bg-siren[aria-pressed="true"]{box-shadow:inset 0 0 0 4px #2f6fd6;background:#dce9ff;color:#1D2842}
 .bg-panel{flex:1 1 42%;min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
 .bg-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .bg-tab{border:0;background:var(--card,#fff);color:inherit;font:inherit;font-weight:700;border-radius:14px;padding:5px 9px;cursor:pointer;box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);font-size:.9rem;display:flex;align-items:center;gap:4px}

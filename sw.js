@@ -1,11 +1,11 @@
 // Hur långt är det kvar – sparar appen i enheten så att den går att öppna utan uppkoppling.
 // Ligger i samma mapp som hur-langt-kvar.html. Byt versionsnummer när appens filer ändras.
-const SHELL = 'hlk-app-v3';
+const SHELL = 'hlk-app-v12';
 // Appen, spelvärden och alla spel, så att spelen fungerar utan nät under resan.
 const GAME_FILES = ['bilbingo', 'memory', 'monster', 'pussel', 'kurragomma', 'forstabokstaven', 'slangbellan', 'ballonger',
   'helikoptern', 'klapadockan', 'rakna', 'parkera', 'godis', 'farglagg', 'prickar', 'musik', 'byggbilen', 'koppla', 'panelen',
-  'masken', 'murbrytaren', 'husdjuret'];
-const APP = ['./hur-langt-kvar.html', './sw.js', './spel.html', './spel/lib/matter.min.js'].concat(GAME_FILES.map(n => `./spel/${n}.js`));
+  'masken', 'murbrytaren', 'husdjuret', 'hanoi', 'pip', 'labyrint', 'hittafelen', 'fargminnet', 'tagbanan', 'fiskdammen', 'klockan', 'papperskorgen'];
+const APP = ['./', './index.html', './hur-langt-kvar.html', './sw.js', './spel.html', './spel/lib/matter.min.js'].concat(GAME_FILES.map(n => `./spel/${n}.js`));
 const LIBS = [
   'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js',
   'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css'
@@ -28,12 +28,19 @@ self.addEventListener('fetch', e => {
   if(req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // Appen själv: hämta ny version om det går, annars den sparade.
+  // Appen själv: hämta ny version om det går, annars den sparade. Med dålig täckning (vanligt i bilen)
+  // väntar vi högst 3,5 sekunder på nätet; sedan visas den sparade och den nya hämtas klart i bakgrunden.
   if(url.origin === location.origin){
-    e.respondWith(fetch(req).then(res => {
+    const net = fetch(req).then(res => {
       if(res.ok){ const copy = res.clone(); caches.open(SHELL).then(c => c.put(req, copy)); }
       return res;
-    }).catch(() => caches.match(req, {ignoreSearch: true})));
+    });
+    e.waitUntil(net.catch(() => {}));
+    e.respondWith(caches.match(req, {ignoreSearch: true}).then(hit => {
+      if(!hit) return net;
+      const late = new Promise(ok => setTimeout(() => ok(hit), 3500));
+      return Promise.race([net.then(res => res.ok ? res : hit, () => hit), late]);
+    }));
     return;
   }
 

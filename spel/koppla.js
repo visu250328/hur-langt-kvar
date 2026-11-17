@@ -38,7 +38,7 @@
 .kp-area{flex:1;min-height:0;display:grid;place-items:center;background:var(--card,#fff);border-radius:24px;box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);position:relative;overflow:hidden;touch-action:none}
 .kp-area svg{width:96%;height:96%;touch-action:none}
 .kp-end{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;gap:12px;z-index:5;
-  background:rgba(255,255,255,.95);border-radius:24px;padding:20px 28px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-width:86%}
+  background:rgba(255,255,255,.95);border-radius:24px;padding:20px 28px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-width:86%;color:#1D2842}
 .kp-end.on{display:flex}
 .kp-end .big{font-size:clamp(1.6rem,5vmin,2.8rem);font-weight:800;line-height:1.15;text-align:center;color:#1D2842;white-space:pre-line}
 .kp-end button{pointer-events:auto;border:0;background:var(--done,#F2B33D);color:#2B1E00;font:inherit;font-size:1.2rem;font-weight:800;border-radius:18px;padding:10px 24px;cursor:pointer}

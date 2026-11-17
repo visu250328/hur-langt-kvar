@@ -19,7 +19,7 @@
 .fl-main.port .fl-tools{flex-direction:row;justify-content:center;gap:18px}
 .fl-trow{display:flex;gap:6px}
 .fl-tool,.fl-size{width:46px;height:46px;border:0;border-radius:14px;cursor:pointer;background:var(--card,#fff);font-size:1.5rem;display:grid;place-items:center;box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);padding:0}
-.fl-tool[aria-pressed="true"],.fl-size[aria-pressed="true"]{box-shadow:inset 0 0 0 4px var(--accent,#2F6FD6);background:#e6f0ff}
+.fl-tool[aria-pressed="true"],.fl-size[aria-pressed="true"]{box-shadow:inset 0 0 0 4px var(--accent,#2F6FD6);background:#e6f0ff;color:#1D2842}
 .fl-size i{display:block;border-radius:50%;background:#1D2842}
 .fl-pal{display:grid;grid-template-columns:repeat(2,64px);gap:10px;align-content:center;justify-content:center}
 .fl-main.port .fl-pal{grid-template-columns:repeat(7,1fr);grid-auto-rows:52px}

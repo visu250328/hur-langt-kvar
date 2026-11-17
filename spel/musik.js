@@ -8,12 +8,12 @@
 .mu-tab{border:0;background:var(--card,#fff);color:inherit;font:inherit;font-weight:800;border-radius:16px;padding:6px 14px;cursor:pointer;box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);display:flex;align-items:center;gap:6px;font-size:1.05rem}
 .mu-tab .ic{font-size:1.6rem;line-height:1}
 .mu-tab[aria-pressed="true"]{box-shadow:inset 0 0 0 4px var(--accent,#2F6FD6)}
-.mu-mute{display:none;background:#fff3c4;border-radius:14px;padding:6px 12px;font-weight:700}
+.mu-mute{display:none;background:#fff3c4;border-radius:14px;padding:6px 12px;font-weight:700;color:#1D2842}
 .mu-mute.on{display:block}
 .mu-stage{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;touch-action:none}
 .mu-songs{display:flex;gap:8px;flex-wrap:wrap}
 .mu-song{border:2px solid var(--line,#C6D1DF);background:var(--card,#fff);color:inherit;font:inherit;font-weight:700;border-radius:999px;padding:5px 12px;cursor:pointer}
-.mu-song[aria-pressed="true"]{border-color:var(--accent,#2F6FD6);background:var(--accent,#2F6FD6);color:#fff}
+.mu-song[aria-pressed="true"]{border-color:#2F6FD6;background:#2F6FD6;color:#fff}
 .mu-prog{height:10px;border-radius:999px;background:var(--line,#C6D1DF);overflow:hidden}
 .mu-prog div{height:100%;width:0;background:var(--done,#F2B33D);transition:width .2s}
 .mu-keys{flex:1;min-height:0;position:relative}
