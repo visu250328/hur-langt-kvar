@@ -1,8 +1,6 @@
 /* Kontrollpanelen – en "busy board" där reglagen (knappar, vred, brytare, spak, reglage, knappsats) och
    det de styr (lampor, fläkt, varningsljus, klocka, trafikljus, kugghjul, lysdioder, visare, display)
-   ligger på två paneler: lampor och maskiner överst, knappar och reglage under. Kopplingen och placeringen
-   är fasta, men reglagen ligger i en annan ordning än det de styr, så barnet får prova sig fram; brickan
-   som påverkas blinkar kort. Liten nivå: 8 + 8 brickor. Stor: 14 + 14.
+   sitter ihop i moduler: varje sak med sitt reglage. Brickan som påverkas blinkar kort. Liten nivå: 8 + 8 brickor. Stor: 14 + 14.
    Följer spelbibliotekets gränssnitt: se bilbingo.js. */
 (function(){
   const CSS = `
@@ -10,14 +8,19 @@
 .pn-top{display:flex;align-items:center;gap:10px;min-height:44px;flex-wrap:wrap}
 .pn-title{font-size:1.7rem;font-weight:800;line-height:1;margin-right:auto}
 .pn-btn{border:2px solid var(--line,#C6D1DF);background:var(--card,#fff);color:inherit;font:inherit;font-weight:700;border-radius:999px;padding:5px 14px;cursor:pointer}
-.pn-board{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px}
-.pn-panel{border-radius:24px;padding:10px 12px 12px;background:linear-gradient(145deg,#5b6470,#3f4650);box-shadow:inset 0 0 0 4px #2e343c;display:flex;flex-direction:column;gap:8px}
-.pn-panel.pn-ctlp{background:linear-gradient(145deg,#3a4250,#272d37)}
+.pn-board{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;justify-content:center;border-radius:24px;padding:12px;background:linear-gradient(145deg,#4a525d,#2e343c)}
+.pn-mods{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:flex-start}
+.pn-mod2{border-radius:20px;padding:8px 10px 10px;background:linear-gradient(145deg,#5b6470,#3f4650);box-shadow:inset 0 0 0 3px #2e343c;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.pn-mrow{display:flex;gap:8px;align-items:flex-start}
+.pn-lgrid{display:grid;grid-template-columns:repeat(var(--n),var(--t));gap:8px}
+.pn-mods .pn-tile{width:var(--t);height:var(--t)}
+.pn-mods .pn-tile.w2{width:calc(var(--t) * 2 + 8px)}
+.pn-mods .pn-tile.h2{height:calc(var(--t) * 2 + 8px)}
 .pn-plabel{align-self:flex-start;font-weight:800;font-size:.85rem;letter-spacing:1px;color:#fff;background:#1D2842;border-radius:8px;padding:3px 12px}
 .pn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--t,112px),1fr));grid-auto-rows:var(--t,112px);grid-auto-flow:dense;gap:10px}
-.pn-board{--t:96px}
+.pn-board{--t:88px}
 .pn-board:not(.pn-small) .pn-tile > *{transform:scale(.86)}
-.pn-board.pn-small{--t:120px;justify-content:center}
+.pn-board.pn-small{--t:118px}
 .pn-tile{position:relative;border-radius:16px;background:linear-gradient(160deg,#d9dde3,#b9bec6);box-shadow:inset 0 0 0 3px #8a929c,0 3px 0 #2e343c;
   display:flex;align-items:center;justify-content:center;gap:8px;touch-action:none;transition:box-shadow .2s}
 .pn-tile.w2{grid-column:span 2}.pn-tile.h2{grid-row:span 2}
@@ -54,7 +57,7 @@
 .pn-fuse.trip i{background:#ff4a3a;box-shadow:0 0 14px 5px #ff4a3a}
 .pn-fuse.trip{animation:pn-glow 1s ease-in-out infinite}
 @keyframes pn-glow{0%,100%{box-shadow:inset 0 0 0 3px #1d2128,0 0 0 0 rgba(255,74,58,0)}50%{box-shadow:inset 0 0 0 3px #1d2128,0 0 18px 6px rgba(255,74,58,.8)}}
-.pn-board.dark .pn-panel.pn-outp{filter:brightness(.55)}
+.pn-board.dark .pn-out{filter:brightness(.5)}
 .pn-key2{width:84px;height:84px;cursor:pointer;border:0;background:none;padding:0}
 .pn-key2 .kk{transition:transform .25s ease}
 .pn-key2.on .kk{transform:rotate(90deg)}
@@ -87,11 +90,10 @@
     root.innerHTML = '';
     const el = document.createElement('div'); el.className = 'pn';
     el.innerHTML = `<div class="pn-top"><div class="pn-title">Kontrollpanelen</div><div class="pn-secret" aria-live="polite"></div><button type="button" class="pn-btn" data-a="off">Stäng av allt</button></div>
-      <div class="pn-board"><section class="pn-panel pn-outp" aria-label="Lampor och maskiner"><div class="pn-plabel">LAMPOR OCH MASKINER</div><div class="pn-grid"></div></section>
-        <section class="pn-panel pn-ctlp" aria-label="Knappar och reglage"><div class="pn-plabel">KNAPPAR OCH REGLAGE</div><div class="pn-grid"></div></section></div><div class="pn-done" aria-live="polite">Du har provat allt! 🎉</div>`;
+      <div class="pn-board"><div class="pn-mods"></div></div><div class="pn-done" aria-live="polite">Du har provat allt! 🎉</div>`;
     root.append(el);
     const board = el.querySelector('.pn-board'), doneEl = el.querySelector('.pn-done');
-    const outGrid = el.querySelector('.pn-panel.pn-outp .pn-grid'), ctlGrid = el.querySelector('.pn-panel.pn-ctlp .pn-grid');
+    const modsEl = el.querySelector('.pn-mods');
     board.classList.toggle('pn-small', !big);   // eget klassnamn: 'small' används av spellabbet
 
     // ---------- Ljud ----------
@@ -142,7 +144,7 @@
 
     // ---------- Brickor ----------
     let outTiles = [], ctlTiles = [], tiles = [], spin = [], resets = [], controls = 0, used = new Set(), allDone = false, sounds = [];
-    function tile(cls){ const t = document.createElement('div'); t.className = 'pn-tile' + (cls ? ' ' + cls : ''); tiles.push(t); outTiles.push(t); return t; }
+    function tile(cls){ const t = document.createElement('div'); t.className = 'pn-tile pn-out' + (cls ? ' ' + cls : ''); tiles.push(t); outTiles.push(t); return t; }
     function ctile(cls){ const t = document.createElement('div'); t.className = 'pn-tile' + (cls ? ' ' + cls : ''); tiles.push(t); ctlTiles.push(t); return t; }
     // Brickan som påverkas blinkar kort, så att barnet ser vad som hände.
     const hit = t => { t.classList.remove('hit'); void t.offsetWidth; t.classList.add('hit'); };
@@ -403,7 +405,8 @@
       O.fan = outFan(); O.beacon = outBeacon(); O.bell = outBell(); O.traffic = outTraffic();
       if(big){ O.gears = outGears(); O.leds = outLeds(); O.gauge = outGauge(); O.disp = outDisplay(); }
       O.power = outPower(big ? 1000 : 600, big ? LIMIT : 0);
-      const btnCols = BTN.slice(2).concat(BTN.slice(0, 2));   // fast: knapp 1 är lila, 2 turkos och så vidare
+      // Knappen under en lampa har lampans färg; klockans och trafikljusets knappar har egna färger.
+      const btnCols = LAMP.slice(0, nPush).concat(['#f5c02e', '#2fa84a']);
       const ctls = [];
       const ok = () => S.key && !S.tripped;
       keyCtl = ctlKeySwitch(on => {
@@ -432,11 +435,31 @@
         fuseCtl = ctlFuse(() => { S.tripped = false; fuseCtl.trip(false); [392, 523, 659].forEach((f, i) => tone(f, 0.15, 'sine', 0.1, i * 0.08)); say('Strömmen är tillbaka!'); update(); });
         ctls.push(fuseCtl);
       }
-      // Sakerna ligger i sin naturliga ordning på den övre panelen; reglagen på den undre i en fast
-      // men annan ordning, så att det inte är självklart vilket reglage som styr vad.
-      outTiles.forEach(t => outGrid.append(t));
-      ctlGrid.append(keyCtl.t);
-      fixedOrder(ctlTiles.filter(t => t !== keyCtl.t), big ? 5 : 4).forEach(t => ctlGrid.append(t));
+      // Varje sak sitter ihop med sitt reglage i en modul. Lamporna ligger på en rad med sina
+      // knappar och brytare direkt under. Ström (nyckel, kraftmätare, säkring) kommer först.
+      modsEl.innerHTML = '';
+      const mod = (name, tiles) => {
+        const m = document.createElement('div'); m.className = 'pn-mod2';
+        m.innerHTML = `<div class="pn-plabel">${name}</div>`;
+        const row = document.createElement('div'); row.className = 'pn-mrow'; tiles.forEach(t => row.append(t)); m.append(row);
+        modsEl.append(m); return m;
+      };
+      mod('STRÖM', [keyCtl.t, O.power.t].concat(big ? [fuseCtl.t] : []));
+      const lm = document.createElement('div'); lm.className = 'pn-mod2'; lm.innerHTML = '<div class="pn-plabel">LAMPOR</div>';
+      const lg = document.createElement('div'); lg.className = 'pn-lgrid'; lg.style.setProperty('--n', nBulbs);
+      O.bulbs.forEach(b => lg.append(b.t)); ctls.slice(0, nBulbs).forEach(c => lg.append(c.t));
+      lm.append(lg); modsEl.append(lm);
+      const C = ctls.slice(nBulbs);   // vred, röda knappen, klockans knapp, trafikljusets knapp, [spak, reglage, vred, knappsats]
+      mod('FLÄKTEN', [O.fan.t, C[0].t]);
+      mod('VARNINGSLJUSET', [O.beacon.t, C[1].t]);
+      mod('KLOCKAN', [O.bell.t, C[2].t]);
+      mod('TRAFIKLJUSET', [O.traffic.t, C[3].t]);
+      if(big){
+        mod('KUGGHJULEN', [O.gears.t, C[4].t]);
+        mod('LYSDIODERNA', [O.leds.t, C[5].t]);
+        mod('VISAREN', [O.gauge.t, C[6].t]);
+        mod('DISPLAYEN', [O.disp.t, C[7].t]);
+      }
       resets.push(...Object.values(O).flat().map(o => () => o.reset()), ...ctls.map(c => () => c.reset()), () => keyCtl.reset());
       showSecrets(); update();
     }
@@ -541,7 +564,7 @@
 
   (window.HLK_SPEL = window.HLK_SPEL || []).push({
     id: 'panelen', title: 'Kontrollpanelen', icon: '🎛️',
-    about: 'En panel med lampor, fläkt, klocka, kraftmätare och mer, och under den en panel med knappar, vred, brytare och spakar. Vrid om nyckeln, prova dig fram, lär dig vad som styr vad och hitta hemliga kombinationer! Liten: 8 reglage. Stor: 14 reglage.',
+    about: 'En panel med lampor, fläkt, klocka, kraftmätare och mer, var och en med sina knappar, vred, brytare och spakar. Vrid om nyckeln och hitta hemliga kombinationer! Liten: 8 reglage. Stor: 14 reglage.',
     start
   });
 })();

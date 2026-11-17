@@ -17,6 +17,7 @@
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6%;padding:4px;
   box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);transition:background-color .25s,box-shadow .25s}
 .bb-emoji{line-height:1;transition:transform .25s}
+.bb-emoji svg{width:1.15em;height:1.15em;display:block}
 .bb-label{font-weight:700;line-height:1;opacity:.75}
 .bb-cell[aria-pressed="true"]{background:var(--done,#F2B33D);box-shadow:inset 0 0 0 3px var(--done,#F2B33D);color:#2B1E00}
 .bb-cell[aria-pressed="true"] .bb-emoji{transform:scale(.92)}
@@ -44,7 +45,7 @@
     ['Ko','🐄'],['Häst','🐎'],['Får','🐑'],['Hund','🐕'],['Fågel','🐦'],
     ['Lastbil','🚚'],['Buss','🚌'],['Traktor','🚜'],['Röd bil','🚗'],['Blå bil','🚙'],
     ['Cykel','🚲'],['Motorcykel','🏍️'],['Tåg','🚆'],['Bro','🌉'],['Hus','🏠'],
-    ['Gran','🌲'],['Flagga','🇸🇪'],['Trafikljus','🚦'],['Bensinmack','⛽'],['Båt','⛵']
+    ['Gran','🌲'],['Flagga','svg:flagga'],['Trafikljus','🚦'],['Bensinmack','⛽'],['Båt','⛵']
   ];
   const RARE = [
     ['Polisbil','🚓'],['Ambulans','🚑'],['Brandbil','🚒'],['Älg','🫎'],['Rådjur','🦌'],
@@ -69,6 +70,9 @@
     L.push(Array.from({length: n}, (_, i) => i * n + (n - 1 - i)));
     return L;
   }
+
+  const FLAG_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="4" width="3" height="42" rx="1.5" fill="#8a929c"/><circle cx="6.5" cy="4" r="2.5" fill="#f5c02e"/>'
+    + '<rect x="8" y="7" width="36" height="24" rx="2" fill="#1f6fd6"/><rect x="18" y="7" width="6" height="24" fill="#ffd23a"/><rect x="8" y="16" width="36" height="6" fill="#ffd23a"/></svg>';
 
   function start(root, opts){
     opts = opts || {};
@@ -130,7 +134,9 @@
         b.setAttribute('aria-pressed', String(!!st.marked[i]));
         b.setAttribute('aria-label', label);
         b.innerHTML = '<span class="bb-emoji"></span><span class="bb-label"></span><span class="bb-stamp" aria-hidden="true">✓</span>';
-        b.querySelector('.bb-emoji').textContent = emoji;
+        // Svenska flaggan ritas själv: flaggemojier visas som bokstäverna "SE" på bland annat Windows.
+        if(emoji === 'svg:flagga' || emoji === '\u{1F1F8}\u{1F1EA}') b.querySelector('.bb-emoji').innerHTML = FLAG_SVG;   // även äldre sparade brickor
+        else b.querySelector('.bb-emoji').textContent = emoji;
         b.querySelector('.bb-label').textContent = label;
         b.addEventListener('click', () => toggle(i));
         grid.append(b);

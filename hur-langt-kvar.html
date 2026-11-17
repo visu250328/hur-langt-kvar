@@ -121,6 +121,40 @@ input[type=search]{
 .dot[data-g]::before{content:attr(data-g);position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);font-size:17px;line-height:1;filter:grayscale(1);opacity:.7}
 .dot[data-g].gnextdot::before{filter:none;opacity:1}
 @keyframes gpop{0%{transform:scale(.3)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.pin.car{cursor:pointer}
+/* Bilens lampor på natten: ljuskägla framåt och röda baklyktor bakåt. Emojin pekar åt vänster;
+   .right vänder bilen, och då även lamporna. */
+.pin.car::before,.pin.car::after{content:"";position:absolute;top:50%;pointer-events:none;opacity:0;transition:opacity .8s}
+.pin.car::before{right:calc(100% - 8px);width:78px;height:40px;transform:translateY(-50%);
+  background:linear-gradient(to left,rgba(255,244,170,.95),rgba(255,244,170,0));clip-path:polygon(100% 38%,0 0,0 100%,100% 62%)}
+.pin.car::after{left:calc(100% - 9px);width:12px;height:12px;border-radius:50%;transform:translateY(-50%);background:#ff3b30;box-shadow:0 0 10px 5px rgba(255,59,48,.75)}
+.pin.car.right::before{right:auto;left:calc(100% - 8px);background:linear-gradient(to right,rgba(255,244,170,.95),rgba(255,244,170,0));clip-path:polygon(0 38%,100% 0,100% 100%,0 62%)}
+.pin.car.right::after{left:auto;right:calc(100% - 9px)}
+.pin.car.night::before,.pin.car.night::after{opacity:1}
+.night .mapwrap{background:#1E2A24}
+.pin.car.pop span{animation:carpop .6s ease}
+@keyframes carpop{0%{transform:scale(.4)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+.carpick{position:fixed;inset:0;z-index:8;background:rgba(10,18,40,.45);display:grid;place-items:center;padding:20px}
+.carpick[hidden]{display:none}
+.carcard{background:var(--card);border-radius:28px;padding:18px 20px 20px;width:min(520px,100%);text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.carhead{font-weight:800;font-size:1.4rem;margin-bottom:12px}
+.cargrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cargrid button{border:0;background:var(--sky);border-radius:20px;aspect-ratio:1;font-size:clamp(2.4rem,9vw,3.4rem);line-height:1;cursor:pointer;display:grid;place-items:center}
+.cargrid button[aria-pressed="true"]{background:var(--done);box-shadow:0 0 0 4px var(--card),0 0 0 7px var(--done)}
+.lock{position:fixed;inset:0;z-index:8;background:rgba(10,18,40,.55);display:grid;place-items:center;padding:20px}
+.lock[hidden]{display:none}
+.lockcard{background:var(--card);border-radius:26px;padding:20px 22px;width:min(360px,100%);text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.lockhead{font-weight:800;color:var(--muted)}
+.lockq{font-size:2.2rem;font-weight:800;margin:6px 0 4px}
+.lockans{font-size:1.8rem;font-weight:800;min-height:2.6rem;border-bottom:3px solid var(--line);margin:0 30px 14px;letter-spacing:2px}
+.lockcard.bad{animation:shake .4s}
+.lockpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.lockpad button{border:0;background:var(--sky);color:var(--ink);border-radius:14px;padding:12px 0;font-weight:800;font-size:1.4rem;cursor:pointer}
+.lockpad button.ok{background:var(--done);color:#2B1E00}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+.codebox{display:flex;gap:8px;margin-top:8px}
+.codebox input{width:7em;border:2px solid var(--line);border-radius:12px;padding:6px 10px;font:inherit;font-weight:800;font-size:1.1rem;letter-spacing:3px;background:var(--card);color:var(--ink)}
+.codebox button{flex:1;border:2px solid var(--line);background:transparent;border-radius:12px;font-weight:700;cursor:pointer;color:var(--ink)}
 .gameov{position:fixed;inset:0;z-index:7;background:var(--sky);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .gameov[hidden]{display:none}
 .gtop{display:flex;align-items:center;gap:14px;padding:8px 14px}
@@ -302,6 +336,11 @@ input[type=range]{width:100%;height:34px;margin:12px 0 2px;accent-color:var(--do
     <button type="button" data-v="1">Spel på</button><button type="button" data-v="0">Spel av</button>
   </div>
   <p class="status" id="gameStatus"></p>
+  <div class="codebox" id="codeBox">
+    <input type="text" id="codeInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Kod" aria-label="Spelordningens kod från den andra enheten" autocomplete="off">
+    <button type="button" id="codeBtn">Använd koden</button>
+  </div>
+  <button class="link" id="codeReset" type="button" hidden>Använd den här enhetens egen kod</button>
   <button class="end" id="unlockBtn" type="button">Lås upp nästa spel nu</button>
   <button class="end" id="skipFood" type="button" hidden>Hoppa över matstoppet</button>
   <button class="end" id="endBtn" type="button">Avsluta resan</button>
@@ -310,6 +349,20 @@ input[type=range]{width:100%;height:34px;margin:12px 0 2px;accent-color:var(--do
 <div class="gameov" id="gameOv" role="dialog" aria-label="Spel" hidden>
   <div class="gtop"><button type="button" id="gameBack">← Tillbaka till resan</button><div class="gname" id="gameName"></div></div>
   <iframe id="gameFrame" title="Spel"></iframe>
+</div>
+
+<div class="carpick" id="carPick" role="dialog" aria-label="Välj bil" hidden>
+  <div class="carcard"><div class="carhead">Vilken bil vill du åka i?</div><div class="cargrid" id="carGrid"></div></div>
+</div>
+
+<div class="lock" id="lock" role="dialog" aria-label="Vuxenlås" hidden>
+  <div class="lockcard">
+    <div class="lockhead">Bara för vuxna</div>
+    <div class="lockq" id="lockQ"></div>
+    <div class="lockans" id="lockAns" aria-live="polite"></div>
+    <div class="lockpad" id="lockPad"></div>
+    <button class="link" id="lockCancel" type="button">Avbryt</button>
+  </div>
 </div>
 
 <div class="arrive" id="arrive" role="dialog" aria-label="Framme">
@@ -890,7 +943,31 @@ function isDark(){
   const t = document.documentElement.dataset.theme;
   return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
 }
-const pal = () => isDark() ? PAL.dark : PAL.light;
+// Under resan följer kartan solen: mörk när solen är nere där bilen är, ljus när den är uppe.
+// Innan positionen är känd följer kartan enhetens inställning.
+let mapNight = null;
+const pal = () => (mapNight == null ? isDark() : mapNight) ? PAL.dark : PAL.light;
+// Solens höjd över horisonten i grader (förenklad astronomisk formel, fel under en halv grad).
+function sunAltitude(lat, lon, t){
+  const rad = Math.PI / 180, n = t / 86400000 + 2440587.5 - 2451545.0;
+  const L = (280.460 + 0.9856474 * n) % 360, g = ((357.528 + 0.9856003 * n) % 360) * rad;
+  const lam = (L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * rad, eps = (23.439 - 0.0000004 * n) * rad;
+  const ra = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam)), dec = Math.asin(Math.sin(eps) * Math.sin(lam));
+  const gmst = ((18.697374558 + 24.06570982441908 * n) % 24 + 24) % 24;
+  const H = (gmst * 15 + lon) * rad - ra;
+  return Math.asin(Math.sin(lat * rad) * Math.sin(dec) + Math.cos(lat * rad) * Math.cos(dec) * Math.cos(H)) / rad;
+}
+// Solen räknas som nere när dess övre kant är under horisonten (−0,833°), som vid solnedgången.
+function updateNight(S){
+  const alt = sunAltitude(S.pos[1], S.pos[0], S.now), night = alt < -0.833;
+  sunInfo = {alt, night};
+  if(night === mapNight) return;
+  mapNight = night;
+  applyPalette();
+  document.body.classList.toggle('night', night);
+  if(carEl) carEl.classList.toggle('night', night);
+}
+let sunInfo = null;
 
 function mapStyle(c){
   const src = {source: 'omt'};
@@ -1018,7 +1095,10 @@ function ensureMap(){
     map.addControl(new maplibregl.AttributionControl({compact: true}), 'bottom-right');
     startMarker = new maplibregl.Marker({element: badge('start')});
     endMarker = new maplibregl.Marker({element: badge('end', '🏁')});
-    carEl = badge('car', '🚗');
+    carEl = badge('car', carEmoji());
+    carEl.classList.toggle('night', !!mapNight);
+    carEl.setAttribute('role', 'button'); carEl.setAttribute('aria-label', 'Byt bil');
+    carEl.addEventListener('click', e => { e.stopPropagation(); openCarPick(); });
     carMarker = new maplibregl.Marker({element: carEl});
     foodEl = badge('food', '🍽️');
     foodMarker = new maplibregl.Marker({element: foodEl});
@@ -1050,7 +1130,7 @@ function applyPalette(){
   set('places','text-color',c.label); set('places','text-halo-color',c.halo);
   set('route-casing','line-color',c.casing); set('done-casing','line-color',c.casing); set('route-left','line-color',c.left); set('route-done','line-color',c.done); set('guess-line','line-color',c.done);
 }
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyPalette);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if(mapNight == null) applyPalette(); });
 
 /* ================= Kartan: rutt, spår och bil ================= */
 const multi = runs => ({type: 'Feature', properties: {}, geometry: {type: 'MultiLineString', coordinates: runs.map(atLeast2)}});
@@ -1154,6 +1234,7 @@ function render(){
   const T = active(), S = stateOf(T);
   lastS = S;
   const remSec = S.remM < 100 ? 0 : S.remPlannedSec * S.pace.pace;
+  updateNight(S);
   renderMap(S);
 
   $('#pausePill').hidden = !S.stopped;
@@ -1168,6 +1249,7 @@ function render(){
   renderDots(S, remSec, foodSec);
   updateGames(T, S);
 
+  const sunTxt = sunInfo ? (sunInfo.night ? `Solen är nere (${Math.round(sunInfo.alt)}°), kartan visas i nattläge och bilen har lamporna tända.` : `Solen är uppe (${Math.round(sunInfo.alt)}°), kartan visas i dagsläge.`) : '';
   const pct = Math.round((S.pace.raw - 1) * 100);
   const paceTxt = T.obs.sec < 300 ? 'räknas efter fem minuters körning'
     : Math.abs(pct) < 5 ? 'som beräknat'
@@ -1190,6 +1272,7 @@ function render(){
       (S.offM > 200 ? ', så tid kvar räknar med vägen tillbaka till rutten.' : '.'));
   lines.push(`Rutten räknades senast ${clock(T.route.at)}.` + (S.offM > 200 ? ` Ni är ${fmtKm(S.offM / 1000)} från vägen.` : ''));
   if(mapCacheText) lines.push(mapCacheText);
+  if(sunTxt) lines.push(sunTxt);
   $('#stats').textContent = lines.join(' ');
   if(mode === 'sim') $('#simLabel').textContent =
     `${Math.round(sim.along / sim.g.len * 100)} % av ${sim.base ? 'den planerade vägen' : 'den omräknade vägen'}`;
@@ -1275,14 +1358,16 @@ const GAMES = [
   {id: 'rakna', t: 'Räkna', i: '🔢', c: 'lugn'}, {id: 'farglagg', t: 'Färglägg', i: '🎨', c: 'lugn'},
   {id: 'prickar', t: 'Prick till prick', i: '✏️', c: 'lugn'}, {id: 'koppla', t: 'Koppla ihop', i: '🔗', c: 'lugn'},
   {id: 'klapadockan', t: 'Klä på dockan', i: '👗', c: 'lugn'}, {id: 'byggbilen', t: 'Bygg bilen', i: '🏎️', c: 'lugn'},
+  {id: 'husdjuret', t: 'Husdjuret', i: '🐣', c: 'lugn'},
   {id: 'slangbellan', t: 'Slangbellan', i: '🎯', c: 'aktiv'}, {id: 'ballonger', t: 'Ballonger', i: '🎈', c: 'aktiv'},
   {id: 'helikoptern', t: 'Helikoptern', i: '🚁', c: 'aktiv'}, {id: 'kurragomma', t: 'Kurragömma', i: '🐹', c: 'aktiv'},
   {id: 'godis', t: 'Godisbyte', i: '🍬', c: 'aktiv'}, {id: 'parkera', t: 'Parkera', i: '🅿️', c: 'aktiv'},
-  {id: 'musik', t: 'Musik', i: '🎹', c: 'aktiv'}, {id: 'panelen', t: 'Kontrollpanelen', i: '🎛️', c: 'aktiv'}
+  {id: 'musik', t: 'Musik', i: '🎹', c: 'aktiv'}, {id: 'panelen', t: 'Kontrollpanelen', i: '🎛️', c: 'aktiv'},
+  {id: 'masken', t: 'Masken', i: '🐛', c: 'aktiv'}, {id: 'murbrytaren', t: 'Murbrytaren', i: '🧱', c: 'aktiv'}
 ];
 const gameById = id => GAMES.find(g => g.id === id);
 // Ändras spellistan ändras ordningen; versionen ingår i fröet och i kontrollkoden.
-const GAMES_VERSION = 1;
+const GAMES_VERSION = 2;
 const GSET_KEY = 'hur-langt-kvar-spel';
 let gset = {level: 'small', sound: true, on: true};
 try{ Object.assign(gset, JSON.parse(localStorage.getItem(GSET_KEY) || '{}')); }catch(e){}
@@ -1293,18 +1378,20 @@ function hash32(str){ let h = 2166136261; for(let i = 0; i < str.length; i++){ h
 function rng(seed){ let a = seed; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function seedOf(T){
   const d = new Date(T.startTime), p = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}|${T.dest[0].toFixed(2)},${T.dest[1].toFixed(2)}|v${GAMES_VERSION}`;
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}|${T.dest[0].toFixed(2)},${T.dest[1].toFixed(2)}`;
 }
+// Koden: fyra siffror från datum och resmål, eller en kod som har skrivits in från den andra enheten.
+// Ordningen räknas fram enbart från koden (och spellistans version).
+const ownCode = T => String(hash32(seedOf(T)) % 10000).padStart(4, '0');
+const codeOf = T => (T.gm && T.gm.code) || ownCode(T);
 function orderOf(T, cat){
-  const ids = GAMES.filter(g => g.c === cat).map(g => g.id), r = rng(hash32(seedOf(T) + '|' + cat));
+  const ids = GAMES.filter(g => g.c === cat).map(g => g.id), r = rng(hash32('kod ' + codeOf(T) + '|' + cat + '|v' + GAMES_VERSION));
   for(let i = ids.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
   return ids;
 }
-// Kontrollkoden i vuxenpanelen: samma kod på båda enheterna betyder samma spelordning.
-const codeOf = T => { const h = hash32(seedOf(T)).toString(36).toUpperCase().padStart(4, '0'); return h.slice(0, 2) + '-' + h.slice(2, 4); };
 function gmOf(T){ if(!T.gm) T.gm = {startRem: T.plan.duration, list: [], bonus: 0, ptr: {}}; return T.gm; }
-// Nytt spel varannan prick vid 10-minutersprickar, annars vid varje prick.
-const gInterval = () => { const u = dotUnit(); return u === 600 ? 1200 : u; };
+// Nytt spel var 15:e minut på resor upp till 4 timmar (10-minutersprickar), annars var 20:e minut.
+const gInterval = () => dotUnit() === 600 ? 900 : 1200;
 // Kategori för steg k: först Bilbingo, sedan ett lugnt spel, sedan varvat aktivt och lugnt.
 // Sista 30 minuterna och efter klockan 19 bara lugna spel.
 function catFor(k, milestoneRem, now){
@@ -1353,11 +1440,12 @@ function updateGames(T, S){
   while(G.list.length < reached){
     const k = G.list.length, j = J0 - k + G.bonus;
     const id = pickGame(T, G.ptr, G.list, k, Math.max(0, j) * iv, now);
-    G.list.push({id, at: now}); added = id;
+    G.list.push({id, at: now, m: Math.max(0, j) * iv}); added = id;
   }
   if(added){ if(T === trip) save(); chime(); setTimeout(() => sayGame('Nu finns ett nytt spel: ' + gameById(added).t + '!'), 500); }
   // Nästa punkt och förhandsvisning av de kommande spelen (utan att flytta något på riktigt).
-  const jn = c - 1, hasNext = jn >= 1 && jn <= J0;
+  // Nästa punkt; i början av resan är det den första punkten, minst 15 minuter in.
+  const jn = Math.min(c - 1, J0), hasNext = jn >= 1;
   const ptr = Object.assign({}, G.ptr), list = G.list.slice(), upcoming = [];
   for(let q = 0; q < 3; q++){
     const j = jn - q; if(j < 1 || j > J0) break;
@@ -1391,15 +1479,18 @@ function updateGames(T, S){
   const unit = dotUnit(), dots = [...$('#dots').children], n = dots.length;
   dots.forEach(d => { delete d.dataset.g; d.classList.remove('gnextdot'); });
   upcoming.forEach((u, q) => {
-    const i = n - Math.round(u.j * iv / unit) - 1;
+    // Ikonen sitter på den prick som pågår när spelet låses upp.
+    const i = n - Math.ceil(u.j * iv / unit - 1e-6);
     if(i >= 0 && i < n && !dots[i].classList.contains('food')){ dots[i].dataset.g = gameById(u.id).i; dots[i].classList.toggle('gnextdot', q === 0); }
   });
   gameStatusText(T);
 }
 function gameStatusText(T){
   const el = $('#gameStatus'); if(!el) return;
-  if(!gset.on){ el.textContent = 'Spelen är avstängda på den här enheten.'; return; }
-  const G = gmOf(T), parts = [`Dagens spelordning: ${codeOf(T)}. Samma kod på båda enheterna betyder samma spel.`];
+  if(!gset.on){ el.textContent = 'Spelen är avstängda på den här enheten.'; $('#codeBox').hidden = true; $('#codeReset').hidden = true; return; }
+  const G = gmOf(T);
+  $('#codeReset').hidden = !G.code; $('#codeBox').hidden = false;
+  const parts = [`Spelordningens kod: ${codeOf(T)}${G.code ? ' (inskriven)' : ''}. Samma kod på båda enheterna ger samma spel. Spellista version ${GAMES_VERSION}.`];
   if(!gInfo || gInfo.J0 < 1 && !G.list.length) parts.push('Resan är för kort för att spel ska låsas upp av sig själva; använd knappen nedan.');
   else{
     parts.push(`${G.list.length} ${G.list.length === 1 ? 'spel upplåst' : 'spel upplåsta'}.`);
@@ -1408,6 +1499,21 @@ function gameStatusText(T){
   }
   el.textContent = parts.join(' ');
 }
+// Byt kod mitt i resan: de spel som redan har låsts upp räknas om med den nya koden, med samma tider.
+function setCode(T, code){
+  const G = gmOf(T), old = G.list;
+  G.code = code; G.list = []; G.ptr = {};
+  old.forEach((x, k) => G.list.push({id: pickGame(T, G.ptr, G.list, k, x.m != null ? x.m : 99999, x.at), at: x.at, m: x.m}));
+  if(T === trip) save();
+  shelfKey = ''; render();
+}
+$('#codeBtn').addEventListener('click', () => {
+  if(!trip) return;
+  const v = $('#codeInput').value.replace(/\D/g, '');
+  if(v.length !== 4){ $('#codeInput').focus(); return; }
+  setCode(active(), v === ownCode(active()) ? null : v); $('#codeInput').value = '';
+});
+$('#codeReset').addEventListener('click', () => { if(trip) setCode(active(), null); });
 function openGame(id){
   const g = gameById(id);
   $('#gameName').textContent = g.i + ' ' + g.t;
@@ -1434,6 +1540,30 @@ document.querySelectorAll('#gsoundSeg button').forEach(b => b.addEventListener('
 document.querySelectorAll('#gonSeg button').forEach(b => b.addEventListener('click', () => { gset.on = b.dataset.v === '1'; saveGset(); paintGameSegs(); shelfKey = ''; render(); }));
 $('#unlockBtn').addEventListener('click', () => { if(!trip) return; gmOf(active()).bonus++; shelfKey = ''; render(); });
 paintGameSegs();
+
+/* ================= Välj bil =================
+   Ett tryck på bilen på kartan visar fordon att välja mellan. Valet sparas i enheten. Alla emojier
+   är sedda från sidan och vänds efter färdriktningen som förut. */
+const CARS = [['🚗', 'Röd bil'], ['🚙', 'Blå bil'], ['🏎️', 'Racerbil'], ['🚕', 'Taxi'], ['🚓', 'Polisbil'], ['🚑', 'Ambulans'],
+  ['🚒', 'Brandbil'], ['🚐', 'Minibuss'], ['🚌', 'Buss'], ['🛻', 'Pickup'], ['🚚', 'Lastbil'], ['🚜', 'Traktor']];
+const carEmoji = () => CARS.some(c => c[0] === gset.car) ? gset.car : '🚗';
+function openCarPick(){
+  const grid = $('#carGrid'); grid.innerHTML = '';
+  CARS.forEach(([e, name]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = e;
+    b.setAttribute('aria-label', name); b.setAttribute('aria-pressed', String(e === carEmoji()));
+    b.addEventListener('click', ev => { ev.stopPropagation(); pickCar(e, name); });
+    grid.append(b);
+  });
+  $('#carPick').hidden = false;
+}
+function pickCar(e, name){
+  gset.car = e; saveGset();
+  $('#carPick').hidden = true;
+  if(carEl){ carEl.querySelector('span').textContent = e; carEl.classList.remove('pop'); void carEl.offsetWidth; carEl.classList.add('pop'); }
+  chime(); sayGame(name + '!');
+}
+$('#carPick').addEventListener('click', e => { if(e.target === $('#carPick')) $('#carPick').hidden = true; });
 
 /* ================= Starta och avsluta ================= */
 function show(id){
@@ -1511,9 +1641,46 @@ $('#skipFood').addEventListener('click', async () => {
   else { save(); await reroute(T, T.pos || T.startPos); }
   render();
 });
+/* ================= Vuxenlås =================
+   Vuxenpanelen öppnas efter en mattefråga som kräver räkneordning: multiplikation före addition.
+   Talen väljs så att man får fel svar om man räknar från vänster till höger. Rätt svar låser upp i 5 minuter. */
+let adultUntil = 0, lockQ = null, lockTxt = '';
+const ADULT_MIN = 5;
+function newLockQ(){
+  const r = () => 2 + Math.floor(Math.random() * 8);   // 2–9
+  if(Math.random() < 0.5){ const a = r(), b = r(), c = r(); lockQ = {t: `${a} + ${b} × ${c}`, v: a + b * c}; }
+  else { const a = r(), b = r(), c = r(), d = r(); lockQ = {t: `${a} × ${b} + ${c} × ${d}`, v: a * b + c * d}; }
+  lockTxt = ''; $('#lockQ').textContent = lockQ.t + ' ='; $('#lockAns').textContent = '';
+}
+function openLock(){ newLockQ(); $('#lock').hidden = false; }
+function closeLock(){ $('#lock').hidden = true; }
+function lockKey(k){
+  if(k === '⌫'){ lockTxt = lockTxt.slice(0, -1); }
+  else if(k === 'OK'){
+    if(lockTxt && Number(lockTxt) === lockQ.v){ adultUntil = Date.now() + ADULT_MIN * 60000; closeLock(); setPanel(true); return; }
+    const c = $('.lockcard'); c.classList.remove('bad'); void c.offsetWidth; c.classList.add('bad');
+    newLockQ(); return;
+  }else if(lockTxt.length < 3) lockTxt += k;
+  $('#lockAns').textContent = lockTxt;
+}
+['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', 'OK'].forEach(k => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = k;
+  if(k === 'OK') b.className = 'ok';
+  b.setAttribute('aria-label', k === '⌫' ? 'Sudda' : k === 'OK' ? 'Svara' : k);
+  b.addEventListener('click', () => lockKey(k)); $('#lockPad').append(b);
+});
+$('#lockCancel').addEventListener('click', closeLock);
+document.addEventListener('keydown', e => {
+  if($('#lock').hidden) return;
+  if(/^[0-9]$/.test(e.key)) lockKey(e.key);
+  else if(e.key === 'Backspace') lockKey('⌫');
+  else if(e.key === 'Enter') lockKey('OK');
+  else if(e.key === 'Escape') closeLock();
+});
+function setPanel(on){ $('#panel').classList.toggle('on', on); $('#adultBtn').setAttribute('aria-expanded', String(on)); }
 $('#adultBtn').addEventListener('click', () => {
-  const on = $('#panel').classList.toggle('on');
-  $('#adultBtn').setAttribute('aria-expanded', String(on));
+  if($('#panel').classList.contains('on')){ setPanel(false); return; }
+  if(Date.now() < adultUntil) setPanel(true); else openLock();
 });
 $('#arrive').addEventListener('click', () => $('#arrive').classList.remove('on'));
 

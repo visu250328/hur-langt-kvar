@@ -20,10 +20,12 @@
 .mu-key{position:absolute;bottom:0;border:0;border-radius:0 0 16px 16px;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:12px;font:inherit;font-weight:800;
   box-shadow:inset 0 -8px 0 rgba(0,0,0,.12),0 0 0 2px #2a2a2a;transition:transform .06s,filter .06s;touch-action:none}
 .mu-key .nm{font-size:1.6rem;line-height:1;color:#2a2a2a;background:rgba(255,255,255,.75);border-radius:999px;min-width:1.6em;padding:3px 6px}
-.mu-key.black{background:#2a2a2a!important;z-index:2;border-radius:0 0 10px 10px;box-shadow:inset 0 -6px 0 #000}
+.mu-key.black{background:#2a2a2a;z-index:2;border-radius:0 0 10px 10px;box-shadow:inset 0 -6px 0 #000}
 .mu-key.black .nm{display:none}
 .mu-key.down{transform:translateY(4px);filter:brightness(.85)}
 .mu-key.next{animation:mu-glow .8s ease-in-out infinite}
+.mu-key.black.next{animation:mu-glowb .8s ease-in-out infinite}
+@keyframes mu-glowb{0%,100%{background:#2a2a2a;box-shadow:inset 0 -6px 0 #000}50%{background:#f5c02e;box-shadow:inset 0 -6px 0 #c9930a,0 0 18px 6px #f5c02e}}
 .mu-pads{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:14px}
 .mu-pad{border:0;border-radius:26px;cursor:pointer;color:#fff;font:inherit;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
   box-shadow:inset 0 -10px 0 rgba(0,0,0,.18);transition:transform .06s,filter .06s;touch-action:none;text-shadow:0 2px 0 rgba(0,0,0,.25)}
@@ -56,7 +58,14 @@
   const SONGS = [
     {name: 'Blinka lilla stjärna', icon: '⭐', notes: [60,60,67,67,69,69,67,65,65,64,64,62,62,60,67,67,65,65,64,64,62,67,67,65,65,64,64,62,60,60,67,67,69,69,67,65,65,64,64,62,62,60], small: 14},
     {name: 'Gubben Noak', icon: '🚢', notes: [60,60,60,64,62,62,62,65,64,64,62,62,60]},
-    {name: 'Imse vimse spindel', icon: '🕷️', notes: [60,65,65,65,67,69,69,69,67,65,67,69,65]}
+    {name: 'Imse vimse spindel', icon: '🕷️', notes: [60,65,65,65,67,69,69,69,67,65,67,69,65]},
+    // Broder Jakob (traditionell). Det låga G:et i sista raden spelas som det höga G:et, så att visan ryms på en oktav.
+    {name: 'Broder Jakob', icon: '🔔', notes: [60,62,64,60,60,62,64,60,64,65,67,64,65,67,67,69,67,65,64,60,67,69,67,65,64,60,60,67,60,60,67,60], small: 14},
+    // Ode till glädjen (Beethoven, 1824).
+    {name: 'Ode till glädjen', icon: '🎶', notes: [64,64,65,67,67,65,64,62,60,60,62,64,64,62,62,64,64,65,67,67,65,64,62,60,60,62,64,62,60,60], small: 15},
+    // Für Elise (Beethoven, 1810): början, förenklad till melodin utan ackord och flyttad till d-moll så att den
+    // ryms på pianot. Den behöver en svart tangent (G#) och finns därför bara på stor nivå.
+    {name: 'Für Elise', icon: '🎼', bigOnly: true, notes: [69,68,69,68,69,64,67,65,62,64,65,69,68,69,68,69,64,67,65,62,64,62]}
   ];
   const DRUMS = [
     {id: 'kick', name: 'Bastrumma', icon: '🥁', color: '#e8473c'}, {id: 'snare', name: 'Virvel', icon: '🪘', color: '#f28a2e'},
@@ -181,14 +190,15 @@
       stage.innerHTML = `<div class="mu-songs" role="group" aria-label="Läge"></div><div class="mu-prog" hidden><div></div></div><div class="mu-keys" role="group" aria-label="Piano"></div>`;
       const songsEl = stage.querySelector('.mu-songs'), keysEl = stage.querySelector('.mu-keys'), progEl = stage.querySelector('.mu-prog');
       let song = -1, pos = 0, notes = [];
-      const modes = [{name: 'Spela fritt', icon: '🎵'}].concat(SONGS);
+      const list = SONGS.filter(s => !(s.bigOnly && level === 'small'));
+      const modes = [{name: 'Spela fritt', icon: '🎵'}].concat(list);
       modes.forEach((s, i) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'mu-song';
         b.textContent = `${s.icon} ${s.name}`; b.setAttribute('aria-pressed', String(i === 0));
         b.addEventListener('click', () => {
           songsEl.querySelectorAll('.mu-song').forEach((x, j) => x.setAttribute('aria-pressed', String(j === i)));
           song = i - 1; pos = 0;
-          notes = song < 0 ? [] : (level === 'small' && SONGS[song].small ? SONGS[song].notes.slice(0, SONGS[song].small) : SONGS[song].notes);
+          notes = song < 0 ? [] : (level === 'small' && list[song].small ? list[song].notes.slice(0, list[song].small) : list[song].notes);
           progEl.hidden = song < 0; mark();
         });
         songsEl.append(b);
@@ -304,7 +314,7 @@
 
   (window.HLK_SPEL = window.HLK_SPEL || []).push({
     id: 'musik', title: 'Musik', icon: '🎹',
-    about: 'Spela piano, trummor och gitarr. Pianot kan också lära ut Blinka lilla stjärna, Gubben Noak och Imse vimse spindel. Liten: 8 vita tangenter och en kortare visa. Stor: även svarta tangenter och hela visorna.',
+    about: 'Spela piano, trummor och gitarr. Pianot kan också lära ut Blinka lilla stjärna, Gubben Noak, Imse vimse spindel, Broder Jakob, Ode till glädjen och (på stor nivå) Für Elise. Liten: 8 vita tangenter och en kortare visa. Stor: även svarta tangenter och hela visorna.',
     start,
     _test: {SONGS, WHITE}
   });

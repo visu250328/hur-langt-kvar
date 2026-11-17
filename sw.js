@@ -1,9 +1,10 @@
 // Hur långt är det kvar – sparar appen i enheten så att den går att öppna utan uppkoppling.
 // Ligger i samma mapp som hur-langt-kvar.html. Byt versionsnummer när appens filer ändras.
-const SHELL = 'hlk-app-v2';
+const SHELL = 'hlk-app-v3';
 // Appen, spelvärden och alla spel, så att spelen fungerar utan nät under resan.
 const GAME_FILES = ['bilbingo', 'memory', 'monster', 'pussel', 'kurragomma', 'forstabokstaven', 'slangbellan', 'ballonger',
-  'helikoptern', 'klapadockan', 'rakna', 'parkera', 'godis', 'farglagg', 'prickar', 'musik', 'byggbilen', 'koppla', 'panelen'];
+  'helikoptern', 'klapadockan', 'rakna', 'parkera', 'godis', 'farglagg', 'prickar', 'musik', 'byggbilen', 'koppla', 'panelen',
+  'masken', 'murbrytaren', 'husdjuret'];
 const APP = ['./hur-langt-kvar.html', './sw.js', './spel.html', './spel/lib/matter.min.js'].concat(GAME_FILES.map(n => `./spel/${n}.js`));
 const LIBS = [
   'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js',
