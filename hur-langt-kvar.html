@@ -1,0 +1,1532 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hur långt kvar?">
+<title>Hur långt är det kvar?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+:root{
+  --sky:#DCEAF6; --land:#EEF0DC; --road:#59626F; --edge:#3B424D; --done:#F2B33D;
+  --ink:#1D2842; --muted:#56617A; --card:#FFFFFF; --accent:#2F6FD6; --line:#C6D1DF; --err:#B83A27;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky:#131F36; --land:#1E2A24; --road:#6A7280; --edge:#0C111C; --done:#F5C048;
+    --ink:#EDF1F8; --muted:#A6B1C4; --card:#1A2640; --accent:#80B1FF; --line:#2D3B57; --err:#FF8A73;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --sky:#131F36; --land:#1E2A24; --road:#6A7280; --edge:#0C111C; --done:#F5C048;
+  --ink:#EDF1F8; --muted:#A6B1C4; --card:#1A2640; --accent:#80B1FF; --line:#2D3B57; --err:#FF8A73;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{
+  font-family:"Baloo 2",ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:var(--sky);color:var(--ink);-webkit-tap-highlight-color:transparent;
+}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.screen{display:none;height:100%}
+.screen.on{display:flex}
+
+/* ---------- Setup ---------- */
+#setup{align-items:center;justify-content:center;padding:20px;overflow:auto}
+.card{background:var(--card);border-radius:28px;padding:28px 26px;width:100%;max-width:520px}
+h1{font-size:2.3rem;line-height:1.05;font-weight:800;margin-bottom:6px}
+.lead{color:var(--muted);font-size:1.05rem;line-height:1.35}
+.f{display:block;font-weight:700;font-size:1.1rem;margin:20px 0 6px}
+.seg{display:flex;gap:4px;background:var(--sky);padding:4px;border-radius:999px}
+.seg button{flex:1;border:0;background:transparent;font-weight:700;padding:8px 10px;border-radius:999px;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink)}
+input[type=search]{
+  width:100%;font:inherit;font-size:1.15rem;padding:11px 16px;border:2px solid var(--line);
+  border-radius:16px;background:var(--card);color:var(--ink);-webkit-appearance:none;appearance:none
+}
+#fromBox{margin-top:8px}
+.sugg{list-style:none;padding:0;margin-top:6px;border-radius:16px;overflow:hidden;border:2px solid var(--line)}
+.sugg:empty{display:none}
+.sugg button{display:block;width:100%;text-align:left;border:0;background:var(--card);padding:9px 16px;cursor:pointer;border-top:1px solid var(--line);line-height:1.25}
+.sugg li:first-child button{border-top:0}
+.sugg small{display:block;color:var(--muted);font-size:.92rem}
+.go{
+  margin-top:26px;width:100%;font-size:1.35rem;font-weight:800;padding:13px;border:0;border-radius:18px;
+  background:var(--done);color:#2B1E00;cursor:pointer
+}
+.go:disabled{opacity:.55;cursor:default}
+.msg{min-height:1.5em;margin-top:12px;color:var(--muted);line-height:1.3}
+.msg.err{color:var(--err)}
+.link{background:none;border:0;color:var(--accent);text-decoration:underline;cursor:pointer;padding:6px 0;font-size:1rem}
+
+/* ---------- Resan ---------- */
+#trip{flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px 10px}
+.dest{font-size:1.55rem;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adult{flex:none;border:2px solid var(--line);background:var(--card);font-weight:700;border-radius:999px;padding:5px 14px;cursor:pointer}
+.mapwrap{flex:1;min-height:0;margin:0 14px;background:var(--land);border-radius:34px;overflow:hidden;position:relative}
+#map{width:100%;height:100%;position:relative}
+.mapmsg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted);font-size:1.1rem;z-index:2}
+.pin{display:grid;place-items:center;border-radius:50%;background:var(--card)}
+.pin span{display:block;line-height:1}
+.pin.start{width:22px;height:22px;border:6px solid var(--edge)}
+.pin.end{width:56px;height:56px;font-size:32px;box-shadow:0 0 0 4px var(--edge)}
+.pin.car{width:64px;height:64px;font-size:38px;box-shadow:0 0 0 5px var(--done)}
+.pin.car.right span{transform:scaleX(-1)}
+.pin.car.est{opacity:.55}
+.smooth .pin.car{transition:transform .9s linear}
+.pin.food{width:50px;height:50px;font-size:28px;box-shadow:0 0 0 4px var(--edge)}
+.pin.food.past{opacity:.45}
+.maplibregl-ctrl-attrib{font-family:system-ui,sans-serif}
+
+.readout{padding:14px 20px 18px;text-align:center}
+.big{font-size:clamp(1.9rem,5.2vw,3.2rem);font-weight:800;line-height:1.05}
+.dots{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px;margin:14px auto 4px;max-width:900px}
+.dot{width:24px;height:24px;border-radius:50%;background:var(--done);transition:transform .4s,background-color .4s,box-shadow .4s}
+.dot.gone{background:transparent;box-shadow:inset 0 0 0 3px var(--line);transform:scale(.62)}
+.note,.small{color:var(--muted);font-size:1.02rem}
+.small{margin-top:2px}
+
+.pill{display:inline-block;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:2px 16px;font-weight:700;font-size:1.1rem;margin-bottom:6px}
+.dot.back{animation:back .9s ease-out}
+.dot.part{background:conic-gradient(color-mix(in srgb,var(--done) 22%,transparent) 0 calc((1 - var(--f)) * 1turn),var(--done) 0)}
+.dot.food{width:38px;height:38px;display:grid;place-items:center;font-size:22px;line-height:1}
+.dot.food.gone{box-shadow:none}
+.shelf{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px;margin-top:12px}
+.shelf:empty{display:none}
+.gbtn{border:0;background:var(--card);color:var(--ink);border-radius:22px;padding:8px 18px 8px 10px;display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;
+  box-shadow:inset 0 0 0 3px var(--line);cursor:pointer;position:relative;transition:opacity .6s}
+.gbtn .gi{font-size:2.4rem;line-height:1}
+.gbtn.new{animation:gpop .9s ease}
+.gbtn.sleepy{opacity:.5}
+.gbtn.sleepy::after{content:"🌙";position:absolute;top:-10px;right:-6px;font-size:1.3rem}
+.gnext{display:flex;align-items:center}
+.gnext .ring{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--done) calc(var(--p) * 1turn),var(--line) 0)}
+.gnext .ring span{width:44px;height:44px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:1.7rem;filter:grayscale(1);opacity:.65}
+.dot[data-g]{position:relative}
+.dot[data-g]::before{content:attr(data-g);position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);font-size:17px;line-height:1;filter:grayscale(1);opacity:.7}
+.dot[data-g].gnextdot::before{filter:none;opacity:1}
+@keyframes gpop{0%{transform:scale(.3)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.gameov{position:fixed;inset:0;z-index:7;background:var(--sky);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.gameov[hidden]{display:none}
+.gtop{display:flex;align-items:center;gap:14px;padding:8px 14px}
+#gameBack{border:0;background:var(--card);color:var(--ink);border-radius:999px;padding:8px 18px;font-weight:800;font-size:1.05rem;box-shadow:inset 0 0 0 3px var(--line);cursor:pointer}
+.gname{font-weight:800;font-size:1.2rem}
+#gameFrame{flex:1;border:0;width:100%;min-height:0}
+.foodline{font-size:clamp(1.25rem,3.4vw,1.8rem);font-weight:700;line-height:1.1;margin-top:6px}
+select{width:100%;font:inherit;font-size:1.1rem;padding:10px 14px;border:2px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink)}
+@keyframes back{0%{transform:scale(0)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+/* ---------- Vuxenpanel ---------- */
+.panel{
+  max-height:calc(100% - 80px);overflow:auto;
+  position:fixed;right:14px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:5;
+  width:min(390px,calc(100% - 28px));background:var(--card);border:2px solid var(--line);border-radius:22px;padding:18px;display:none
+}
+.panel.on{display:block}
+.panel h2{font-size:1.25rem;line-height:1.1;margin-bottom:10px}
+input[type=range]{width:100%;height:34px;margin:12px 0 2px;accent-color:var(--done)}
+.quick{display:flex;gap:6px;margin-top:6px}
+.quick button{flex:1;border:2px solid var(--line);background:var(--sky);border-radius:12px;padding:3px 0;font-weight:700;cursor:pointer}
+.sub{display:block;font-weight:700;margin:14px 0 6px}
+.quick + .quick{margin-top:8px}
+#simBox .quick button{padding:6px 4px;line-height:1.15}
+.status{font-size:.98rem;color:var(--muted);margin-top:12px;line-height:1.35}
+.end{margin-top:14px;width:100%;border:2px solid var(--line);background:transparent;border-radius:14px;padding:7px;font-weight:700;cursor:pointer}
+
+/* ---------- Framme ---------- */
+.arrive{
+  position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  text-align:center;background:color-mix(in srgb,var(--sky) 90%,transparent);cursor:pointer
+}
+.arrive.on{display:flex}
+.arrive .e{font-size:7rem;line-height:1}
+.arrive .t{font-size:clamp(3rem,9vw,5rem);font-weight:800;line-height:1}
+.arrive.on .e{animation:hop .9s ease-out 2}
+@keyframes hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-28px)}}
+
+@media (prefers-reduced-motion: reduce){
+  .dot,.smooth .pin.car{transition:none}
+  .dot.back{animation:none}
+  .gbtn.new{animation:none}
+  .arrive.on .e{animation:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Inställning (vuxen) -->
+<section id="setup" class="screen on">
+  <div class="card">
+    <h1>Vart ska vi åka?</h1>
+    <p class="lead">Skriv in resmålet, så räknar appen ut vägen innan ni kör.</p>
+
+    <span class="f">Från</span>
+    <div class="seg" id="fromSeg" role="group" aria-label="Var resan börjar">
+      <button type="button" data-v="here" aria-pressed="true">Där vi är nu</button>
+      <button type="button" data-v="other" aria-pressed="false">Annan adress</button>
+    </div>
+    <div id="fromBox" hidden>
+      <input type="search" id="fromInput" placeholder="Startadress eller plats" autocomplete="off">
+      <ul class="sugg" id="fromList"></ul>
+    </div>
+
+    <label class="f" for="toInput">Till</label>
+    <input type="search" id="toInput" placeholder="Till exempel Liseberg, Göteborg" autocomplete="off">
+    <ul class="sugg" id="toList"></ul>
+
+    <button class="link" id="foodToggle" type="button">Lägg till matstopp</button>
+    <div id="foodBox" hidden>
+      <label class="f" for="foodInput">Matstopp</label>
+      <input type="search" id="foodInput" placeholder="Restaurang eller ort på vägen" autocomplete="off">
+      <ul class="sugg" id="foodList"></ul>
+      <label class="f" for="foodMin">Hur länge stannar ni ungefär?</label>
+      <select id="foodMin">
+        <option value="30">30 minuter</option>
+        <option value="45" selected>45 minuter</option>
+        <option value="60">1 timme</option>
+        <option value="90">1 timme och 30 minuter</option>
+      </select>
+      <button class="link" id="foodRemove" type="button">Ta bort matstoppet</button>
+    </div>
+
+    <button class="go" id="goBtn" type="button">Hämta vägen</button>
+    <p class="msg" id="msg" role="status"></p>
+    <button class="link" id="demoBtn" type="button">Prova med en påhittad resa</button>
+  </div>
+</section>
+
+<!-- Resan (barnen) -->
+<section id="trip" class="screen">
+  <div class="top">
+    <div class="dest" id="destName"></div>
+    <button class="adult" id="adultBtn" type="button" aria-expanded="false" aria-controls="panel">Vuxen</button>
+  </div>
+
+  <div class="mapwrap">
+    <div id="map" role="img" aria-label="Karta över resan"></div>
+    <div class="mapmsg" id="mapMsg" hidden></div>
+  </div>
+
+  <div class="readout">
+    <div class="pill" id="pausePill" hidden>Vi har stannat en stund</div>
+    <div class="big" id="big" aria-live="polite"></div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <div class="note" id="dotNote"></div>
+    <div class="small" id="small"></div>
+    <div class="foodline" id="foodLine" hidden></div>
+    <div class="shelf" id="shelf" role="group" aria-label="Spel"></div>
+  </div>
+</section>
+
+<!-- Vuxen- och testpanel -->
+<aside class="panel" id="panel" aria-label="Vuxeninställningar">
+  <h2>Position</h2>
+  <div class="seg" id="modeSeg" role="group" aria-label="Positionskälla">
+    <button type="button" data-v="gps" aria-pressed="false">GPS</button>
+    <button type="button" data-v="sim" aria-pressed="true">Simulera</button>
+  </div>
+
+  <div id="simBox">
+    <input type="range" id="slider" min="0" max="1000" step="1" value="0" aria-label="Hur långt vi har åkt">
+    <div class="note" id="simLabel"></div>
+    <div class="quick" id="quick">
+      <button type="button" data-p="0">0 %</button>
+      <button type="button" data-p="0.25">25 %</button>
+      <button type="button" data-p="0.5">50 %</button>
+      <button type="button" data-p="0.75">75 %</button>
+      <button type="button" data-p="0.97">97 %</button>
+      <button type="button" data-p="1">100 %</button>
+    </div>
+    <span class="sub">Trafik framåt</span>
+    <div class="seg" id="paceSeg" role="group" aria-label="Simulerad trafik">
+      <button type="button" data-v="1" aria-pressed="true">Som beräknat</button>
+      <button type="button" data-v="1.25" aria-pressed="false">Segt</button>
+      <button type="button" data-v="1.5" aria-pressed="false">Kö</button>
+    </div>
+    <span class="sub">Händelser</span>
+    <div class="quick">
+      <button type="button" id="simStand">Stå still 15 min</button>
+      <button type="button" id="simTunnel">Tunnel 3 min</button>
+      <button type="button" id="simDetour">Kör en omväg</button>
+    </div>
+    <div class="quick">
+      <button type="button" id="simOffline" aria-pressed="false">Internet: på</button>
+    </div>
+    <span class="sub">Lämna appen i 40 min, och under tiden …</span>
+    <div class="quick">
+      <button type="button" data-gap="drive">körde vi</button>
+      <button type="button" data-gap="lunch">åt vi lunch</button>
+      <button type="button" data-gap="other">tog vi en annan väg</button>
+    </div>
+  </div>
+
+  <p class="status" id="stats"></p>
+  <p class="status" id="gpsStatus"></p>
+  <p class="status" id="wakeStatus"></p>
+  <div id="addFoodBox" hidden>
+    <span class="sub">Lägg till matstopp</span>
+    <input type="search" id="addFoodInput" placeholder="Restaurang eller ort längs vägen" autocomplete="off" aria-label="Matstopp">
+    <ul class="sugg" id="addFoodList"></ul>
+    <select id="addFoodMin" aria-label="Hur länge ni stannar" style="margin-top:8px">
+      <option value="30">30 minuter</option>
+      <option value="45" selected>45 minuter</option>
+      <option value="60">1 timme</option>
+      <option value="90">1 timme och 30 minuter</option>
+    </select>
+    <button class="end" id="addFoodBtn" type="button">Lägg till matstopp</button>
+    <p class="status" id="addFoodMsg" role="status"></p>
+  </div>
+  <span class="sub">Spel</span>
+  <div class="seg" id="lvlSeg" role="group" aria-label="Nivå på den här enheten">
+    <button type="button" data-v="small">Liten (4 år)</button><button type="button" data-v="big">Stor (6 år)</button>
+  </div>
+  <div class="seg" id="gsoundSeg" role="group" aria-label="Ljud i spelen" style="margin-top:8px">
+    <button type="button" data-v="1">Ljud på</button><button type="button" data-v="0">Ljud av</button>
+  </div>
+  <div class="seg" id="gonSeg" role="group" aria-label="Spel under resan" style="margin-top:8px">
+    <button type="button" data-v="1">Spel på</button><button type="button" data-v="0">Spel av</button>
+  </div>
+  <p class="status" id="gameStatus"></p>
+  <button class="end" id="unlockBtn" type="button">Lås upp nästa spel nu</button>
+  <button class="end" id="skipFood" type="button" hidden>Hoppa över matstoppet</button>
+  <button class="end" id="endBtn" type="button">Avsluta resan</button>
+</aside>
+
+<div class="gameov" id="gameOv" role="dialog" aria-label="Spel" hidden>
+  <div class="gtop"><button type="button" id="gameBack">← Tillbaka till resan</button><div class="gname" id="gameName"></div></div>
+  <iframe id="gameFrame" title="Spel"></iframe>
+</div>
+
+<div class="arrive" id="arrive" role="dialog" aria-label="Framme">
+  <div class="e">🎉</div>
+  <div class="t">Framme!</div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const KEY = 'hur-langt-kvar-resa-v3';
+const GAP_MS = 60000;          // mer än en minut utan position räknas som en lucka
+
+let fromMode = 'here', fromPlace = null, toPlace = null;
+let trip = null, sim = null, mode = 'sim';
+let watchId = null, wake = null, arrivedShown = false;
+let shownLeft = null, fittedVersion = null, lastS = null;
+
+/* ================= Inställning ================= */
+function setFrom(m){
+  fromMode = m;
+  document.querySelectorAll('#fromSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === m)));
+  $('#fromBox').hidden = m !== 'other';
+}
+document.querySelectorAll('#fromSeg button').forEach(b => b.addEventListener('click', () => setFrom(b.dataset.v)));
+
+async function geocode(q, signal, near){
+  const c = near || [18.07, 59.33];   // utan position: gynna Stockholmsområdet
+  const u = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&lat=${c[1].toFixed(4)}&lon=${c[0].toFixed(4)}`;
+  const r = await fetch(u, {signal});
+  if(!r.ok) throw new Error('Platssökningen svarade inte. Försök igen.');
+  const j = await r.json();
+  return (j.features || []).map(f => {
+    const p = f.properties || {};
+    const street = [p.street, p.housenumber].filter(Boolean).join(' ');
+    const name = p.name || street || p.city || 'Okänd plats';
+    const detail = [p.name ? street : null, p.city || p.county, p.country]
+      .filter(Boolean).filter(x => x !== name).join(', ');
+    return {name, detail, lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1]};
+  });
+}
+
+function searchBox(input, list, onPick, near){
+  let timer = null, ctrl = null;
+  input.addEventListener('input', () => {
+    onPick(null);
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if(q.length < 3){ list.replaceChildren(); return; }
+    timer = setTimeout(async () => {
+      if(ctrl) ctrl.abort();
+      ctrl = new AbortController();
+      try{
+        const res = await geocode(q, ctrl.signal, near ? near() : null);
+        list.replaceChildren(...res.map(r => {
+          const li = document.createElement('li');
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = r.name;
+          if(r.detail){ const s = document.createElement('small'); s.textContent = r.detail; b.append(s); }
+          b.addEventListener('click', () => { input.value = r.name; list.replaceChildren(); onPick(r); });
+          li.append(b);
+          return li;
+        }));
+      }catch(e){ if(e.name !== 'AbortError') list.replaceChildren(); }
+    }, 300);
+  });
+}
+searchBox($('#toInput'), $('#toList'), r => toPlace = r);
+searchBox($('#fromInput'), $('#fromList'), r => fromPlace = r);
+
+let foodOn = false, foodPlace = null;
+searchBox($('#foodInput'), $('#foodList'), r => foodPlace = r);
+function setFood(on){
+  foodOn = on;
+  $('#foodBox').hidden = !on;
+  $('#foodToggle').hidden = on;
+  if(on) $('#foodInput').focus();
+  else { $('#foodInput').value = ''; $('#foodList').replaceChildren(); foodPlace = null; }
+}
+$('#foodToggle').addEventListener('click', () => setFood(true));
+$('#foodRemove').addEventListener('click', () => setFood(false));
+
+function getPos(){
+  return new Promise((res, rej) => {
+    if(!navigator.geolocation) return rej(new Error('Den här enheten kan inte visa var vi är. Välj Annan adress.'));
+    navigator.geolocation.getCurrentPosition(res,
+      () => rej(new Error('Kunde inte se var vi är. Tillåt platstjänster för sidan, eller välj Annan adress.')),
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 60000});
+  });
+}
+
+
+/* ================= Rutter ================= */
+// Med via-punkt (matstoppet) går rutten genom den, och första delsträckan blir vägen dit.
+async function osrm(a, b, via){
+  if(mode === 'sim' && sim && sim.offline) throw new TypeError('Simulerat: ingen uppkoppling');
+  const pts = via ? [a, via, b] : [a, b];
+  const u = `https://router.project-osrm.org/route/v1/driving/${pts.map(p => p[0] + ',' + p[1]).join(';')}?overview=full&geometries=geojson`;
+  const res = await fetch(u);
+  if(!res.ok) throw new Error('Vägtjänsten svarade inte. Försök igen om en stund.');
+  const j = await res.json();
+  if(j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error('Hittade ingen bilväg dit.');
+  const r = j.routes[0];
+  const coords = r.geometry.coordinates.length > 1 ? r.geometry.coordinates : [a, b];
+  const leg = via && r.legs && r.legs.length > 1 ? r.legs[0] : null;
+  return {coords, distance: r.distance, duration: r.duration,
+          stop: leg ? {frac: r.distance ? leg.distance / r.distance : 0, distance: leg.distance, duration: leg.duration} : null};
+}
+
+async function fetchTrip(){
+  const msg = $('#msg'), btn = $('#goBtn');
+  msg.className = 'msg';
+  btn.disabled = true;
+  try{
+    let to = toPlace;
+    if(!to){
+      const q = $('#toInput').value.trim();
+      if(!q) throw new Error('Skriv vart ni ska åka.');
+      msg.textContent = 'Letar efter resmålet…';
+      const r = await geocode(q);
+      if(!r.length) throw new Error('Hittade ingen plats med det namnet. Prova att lägga till orten.');
+      to = r[0];
+    }
+    let from;
+    if(fromMode === 'here'){
+      msg.textContent = 'Letar var vi är…';
+      const pos = await getPos();
+      from = {name: 'Här', lat: pos.coords.latitude, lon: pos.coords.longitude};
+    }else{
+      from = fromPlace;
+      if(!from){
+        const q = $('#fromInput').value.trim();
+        if(!q) throw new Error('Skriv var resan börjar.');
+        const r = await geocode(q);
+        if(!r.length) throw new Error('Hittade inte startplatsen. Prova att lägga till orten.');
+        from = r[0];
+      }
+    }
+    let food = null;
+    if(foodOn){
+      let fp = foodPlace;
+      const q = $('#foodInput').value.trim();
+      if(!fp && q){
+        msg.textContent = 'Letar efter matstoppet…';
+        const r = await geocode(q);
+        if(!r.length) throw new Error('Hittade inte matstoppet. Prova att lägga till orten.');
+        fp = r[0];
+      }
+      if(fp) food = {name: fp.name, pos: [fp.lon, fp.lat], minutes: Number($('#foodMin').value)};
+    }
+    msg.textContent = 'Hämtar vägen…';
+    const r = await osrm([from.lon, from.lat], [to.lon, to.lat], food ? food.pos : null);
+    msg.textContent = '';
+    startTrip(newTrip({from: from.name, to: to.name, dest: [to.lon, to.lat], ...r, food, demo: false}));
+  }catch(e){
+    msg.className = 'msg err';
+    msg.textContent = e instanceof TypeError
+      ? 'Fick ingen kontakt med kart- eller vägtjänsten. Kontrollera uppkopplingen, eller prova den påhittade resan.'
+      : e.message;
+  }finally{
+    btn.disabled = false;
+  }
+}
+$('#goBtn').addEventListener('click', fetchTrip);
+
+
+/* ================= Resans tillstånd =================
+   Allt som behövs för att resan ska överleva en omladdning. Samma form används
+   för den riktiga resan (GPS) och för simuleringen, som har en egen klocka. */
+function newTrip(o){
+  return blankState({from: o.from, to: o.to, dest: o.dest, demo: o.demo, food: o.food || null,
+                     plan: {coords: o.coords, distance: o.distance, duration: o.duration, stop: o.stop || null}}, Date.now());
+}
+function blankState(base, t){
+  const c = base.plan.coords;
+  return {
+    from: base.from, to: base.to, dest: base.dest, demo: base.demo, plan: base.plan,
+    food: base.food ? {name: base.food.name, pos: base.food.pos, minutes: base.food.minutes, reached: false, skipped: false} : null,
+    startTime: t, startPos: c[0], isSim: false,
+    route: {coords: c, distance: base.plan.distance, duration: base.plan.duration, stop: base.plan.stop || null, at: t, version: 0},
+    runs: [[c[0]]],      // körda sträckor; ny delsträcka efter en gissad lucka
+    guessed: [],         // gissade raka linjer över luckor utanför rutten
+    driven: 0, stops: [], gaps: 0,
+    obs: {sec: 0, m: 0}, // körtid och sträcka som appen faktiskt har sett, för takten
+    lastFix: null, lastMoveT: t, pos: null, offSince: null, lastTry: 0, rerouting: false
+  };
+}
+const nowOf = T => T.isSim ? sim.clock : Date.now();
+const active = () => mode === 'sim' ? sim.T : trip;
+const geoCache = new WeakMap();
+function geoOf(T){
+  let g = geoCache.get(T.route);
+  if(!g){ g = prepare(T.route.coords); geoCache.set(T.route, g); }
+  return g;
+}
+const lastStop = T => T.stops[T.stops.length - 1];
+const isStopped = T => { const s = lastStop(T); return !!(s && !s.end); };
+const stoppedSec = (T, now) => T.stops.reduce((s, x) => s + ((x.end || now) - x.start) / 1000, 0);
+const avgSpeed = T => T.plan.distance / T.plan.duration;
+const foodActive = T => !!(T.food && !T.food.reached && !T.food.skipped);
+
+/* Takten bygger bara på det appen faktiskt har sett, så luckor och stopp påverkar inte.
+   Den vägs in gradvis efter fem minuter och begränsas till 0,8–1,6. */
+function paceOf(T){
+  const planned = T.obs.m / avgSpeed(T);
+  const raw = T.obs.sec > 60 && planned > 0 ? T.obs.sec / planned : 1;
+  const w = Math.max(0, Math.min(1, (T.obs.sec - 300) / 1800)) * 0.8;
+  return {raw, pace: 1 + w * (Math.max(0.8, Math.min(1.6, raw)) - 1)};
+}
+
+/* ================= En ny position =================
+   Gemensam för GPS och simulering. */
+function processFix(T, p, speed, acc, t){
+  T.pos = p;
+  if(acc > 100) return;                       // för osäker för att bygga spår på
+  const prev = T.lastFix;
+  T.lastFix = {p, t};
+  if(prev && t - prev.t > GAP_MS){
+    T.lastSpeed = (speed != null && speed >= 0) ? speed : null;
+    handleGap(T, prev, p, t); afterFix(T, p, t); return;
+  }
+
+  let v = (speed != null && speed >= 0) ? speed : null;
+  if(v == null && prev) v = hav(prev.p, p) / Math.max(1, (t - prev.t) / 1000);
+  T.lastSpeed = v;
+  // Takten räknas bara när bilen rullar (även långsamt i kö), inte när vi står vid ett rödljus.
+  if(prev && v != null && v > 0.5){ T.obs.sec += (t - prev.t) / 1000; T.obs.m += hav(prev.p, p); }
+
+  // Spåret: en punkt per 50 meter.
+  const run = T.runs[T.runs.length - 1], last = run[run.length - 1], d = hav(last, p);
+  if(d >= 50){ run.push(p); T.driven += d; }
+
+  // Stopp: under 7 km/h i mer än två minuter.
+  if(v != null && v > 2){
+    T.lastMoveT = t;
+    const s = lastStop(T);
+    if(s && !s.end) s.end = t;
+  }else if(!isStopped(T) && t - T.lastMoveT > 120000){
+    T.stops.push({start: T.lastMoveT});
+  }
+  afterFix(T, p, t);
+}
+
+/* Appen har varit i bakgrunden. Fyll i det vi inte såg. */
+function handleGap(T, prev, p, t){
+  const g = geoOf(T), gapSec = (t - prev.t) / 1000;
+  const a = project(g, prev.p[0], prev.p[1]), b = project(g, p[0], p[1]);
+  const run = T.runs[T.runs.length - 1];
+  let distM;
+  if(a.d < 200 && b.d < 200 && b.along >= a.along){
+    // Båda punkterna ligger på rutten: vi har nästan säkert kört den. Rita in dess form.
+    distM = b.along - a.along;
+    const ia = pointAlong(g, T.route.coords, a.along), ib = pointAlong(g, T.route.coords, b.along);
+    const fill = [ia.pt].concat(T.route.coords.slice(ia.i + 1, ib.i + 1), [ib.pt]);
+    for(const q of fill){ if(hav(run[run.length - 1], q) >= 50) run.push(q); }
+  }else{
+    // Annan väg: vi vet inte hur. Rak, streckad linje och en uppskattad sträcka.
+    distM = hav(prev.p, p) * 1.25;
+    T.guessed.push([run[run.length - 1], p]);
+    T.runs.push([p]);
+  }
+  T.driven += distM;
+  T.gaps++;
+
+  // Dela upp luckans tid: så lång körtid som sträckan borde ha tagit i vår takt, resten är stopp.
+  const driveSec = Math.min(gapSec, distM / avgSpeed(T) * paceOf(T).pace);
+  const stopSec = gapSec - driveSec;
+  const open = isStopped(T);
+  if(distM < 200){
+    // Vi har inte rört oss: hela luckan är ett stopp som pågår.
+    if(!open) T.stops.push({start: prev.t, guessed: true});
+  }else{
+    if(open) lastStop(T).end = prev.t + stopSec * 1000;
+    else if(stopSec > 120) T.stops.push({start: prev.t, end: prev.t + stopSec * 1000, guessed: true});
+    T.lastMoveT = t;
+  }
+}
+
+// Ny rutt vid avvikelse (mer än 200 m från vägen i 25 s) eller var tionde minut under körning.
+function afterFix(T, p, t){
+  const pr = project(geoOf(T), p[0], p[1]);
+  // Matstoppet räknas som avklarat inom 300 m, eller om vi har kört förbi det på rutten.
+  if(foodActive(T)){
+    const st = T.route.stop;
+    if(hav(p, T.food.pos) < 300) T.food.reached = true;
+    else if(st && pr.d < 200 && pr.along > st.frac * geoOf(T).len + 500) T.food.reached = true;
+  }
+  if(pr.d > 200){ if(T.offSince == null) T.offSince = t; } else T.offSince = null;
+  const off = T.offSince != null && t - T.offSince > 25000;
+  const stale = !T.isSim && !isStopped(T) && t - T.route.at > 600000;
+  if((off || stale) && !T.rerouting && t - T.lastTry > 60000) reroute(T, p);
+}
+
+async function reroute(T, p){
+  T.rerouting = true;
+  T.lastTry = nowOf(T);
+  try{
+    const r = await osrm(p, T.dest, foodActive(T) ? T.food.pos : null);
+    T.route = {...r, at: nowOf(T), version: T.route.version + 1};
+    T.offSince = null;
+    T.netDown = false;
+    if(!T.isSim) save();
+    render();
+    return true;
+  }catch(e){
+    console.warn('Ny rutt misslyckades, försöker igen om en minut.', e);
+    if(e instanceof TypeError) T.netDown = true;
+    return false;
+  }finally{
+    T.rerouting = false;
+  }
+}
+
+/* ================= Läget att visa ================= */
+/* Ingen GPS en stund medan vi körde (tunnel): låt bilen rulla vidare längs rutten
+   i 80 % av vår fart, i högst 5 minuter. Bara för visning, aldrig som riktig position. */
+const EST_AFTER = 10, EST_MAX = 300, EST_FACTOR = 0.8;
+function estimateAhead(T, now, g){
+  const lf = T.lastFix;
+  if(!lf || isStopped(T) || !(T.lastSpeed > 2)) return null;
+  const dt = (now - lf.t) / 1000;
+  if(dt < EST_AFTER) return null;
+  const base = project(g, lf.p[0], lf.p[1]);
+  if(base.d > 200) return null;
+  const v = EST_FACTOR * Math.min(T.lastSpeed, avgSpeed(T) / paceOf(T).pace);
+  const along = Math.min(base.along + v * Math.min(dt, EST_MAX), Math.max(base.along, g.len - 200));
+  return {pos: pointAlong(g, T.route.coords, along).pt, along};
+}
+
+function stateOf(T){
+  const now = nowOf(T), g = geoOf(T), r = T.route;
+  const lastRun = T.runs[T.runs.length - 1];
+  let pos = T.pos || lastRun[lastRun.length - 1];
+  let pr = project(g, pos[0], pos[1]);
+  const est = estimateAhead(T, now, g);
+  if(est){ pos = est.pos; pr = {d: 0, along: est.along}; }
+  // Utanför rutten och ingen ny rutt än: räkna med vägen tillbaka till rutten.
+  const back = pr.d > 200 ? pr.d * 1.25 : 0;
+  const {i} = pointAlong(g, r.coords, pr.along);
+  const frac = Math.max(0, 1 - pr.along / g.len);
+  const stopSec = stoppedSec(T, now);
+  let toFoodSec = null, toFoodM = null;
+  if(foodActive(T) && r.stop){
+    const sa = r.stop.frac * g.len, f = sa > 0 ? Math.max(0, (sa - pr.along) / sa) : 0;
+    toFoodSec = r.stop.duration * f;
+    toFoodM = r.stop.distance * f;
+  }
+  return {
+    toFoodSec, toFoodM, food: T.food, foodActive: foodActive(T),
+    atFood: !!(T.food && T.food.reached && !T.food.skipped && hav(pos, T.food.pos) < 500),
+    pos, runs: T.runs.map((run, k) => k === T.runs.length - 1 ? run.concat([pos]) : run),
+    guessed: T.guessed, ahead: [pos].concat(r.coords.slice(i + 1)),
+    movingSec: Math.max(0, (now - T.startTime) / 1000 - stopSec), stopSec,
+    guessedStopSec: T.stops.filter(x => x.guessed).reduce((s, x) => s + ((x.end || now) - x.start) / 1000, 0),
+    drivenM: T.driven, remM: hav(pos, T.dest) < 100 ? 0 : r.distance * frac + back,
+    remPlannedSec: r.duration * frac + back / avgSpeed(T),
+    estimated: !!est, noGpsSec: T.lastFix ? (now - T.lastFix.t) / 1000 : null,
+    netDown: !!T.netDown || (T.isSim ? !!sim.offline : navigator.onLine === false),
+    stopped: isStopped(T), offM: pr.d, pace: paceOf(T), gaps: T.gaps, now,
+    version: (T.isSim ? 's' : 'g') + r.version + ':' + T.guessed.length
+  };
+}
+
+/* ================= GPS ================= */
+function gpsStatus(t){ $('#gpsStatus').textContent = t; }
+function startGps(){
+  if(watchId != null) return;
+  if(!navigator.geolocation){ gpsStatus('Den här webbläsaren ger ingen GPS till sidan. Använd Simulera.'); return; }
+  gpsStatus('Väntar på GPS…');
+  watchId = navigator.geolocation.watchPosition(pos => {
+    const c = pos.coords;
+    processFix(trip, [c.longitude, c.latitude], c.speed, c.accuracy, Date.now());
+    gpsStatus(`GPS: noggrannhet ±${Math.round(c.accuracy)} m.`);
+    saveSoon();
+    render();
+  }, err => {
+    gpsStatus(err.code === 1
+      ? 'Platstjänster är avstängda för sidan. Tillåt dem i inställningarna, eller använd Simulera.'
+      : 'Ingen GPS-position just nu. Appen försöker igen.');
+  }, {enableHighAccuracy: true, maximumAge: 2000, timeout: 20000});
+}
+function stopGps(){
+  if(watchId != null){ navigator.geolocation.clearWatch(watchId); watchId = null; }
+  gpsStatus('');
+}
+setInterval(() => { if(trip && mode === 'gps') render(); }, 5000);
+window.addEventListener('online', () => render());
+window.addEventListener('offline', () => render());
+
+/* ================= Simulering =================
+   Simuleringen kör en låtsasbil genom exakt samma kod som GPS:en,
+   med en egen klocka så att 40 minuter kan gå på en knapptryckning. */
+function resetSim(){
+  const t0 = Date.now(), T = blankState(trip, t0);
+  T.isSim = true;
+  const pace = sim ? sim.pace : 1, offline = sim ? sim.offline : false;
+  sim = {T, path: trip.plan.coords, g: prepare(trip.plan.coords), along: 0, clock: t0, pace, offline, busy: false, base: true};
+  processFix(T, T.startPos, 0, 5, t0);
+  $('#slider').value = 0;
+  shownLeft = null; fittedVersion = null;
+  syncSimButtons();
+}
+const simSpeed = () => avgSpeed(sim.T) / sim.pace;
+
+function driveTo(target){
+  target = Math.max(0, Math.min(sim.g.len, target));
+  const v = simSpeed();
+  while(sim.along < target - 0.5){
+    const step = Math.min(1000, target - sim.along);
+    sim.along += step;
+    sim.clock += step / v * 1000;
+    processFix(sim.T, pointAlong(sim.g, sim.path, sim.along).pt, v, 5, sim.clock);
+  }
+}
+function simGo(frac){
+  if(sim.busy) return;
+  const target = frac * sim.g.len;
+  if(target < sim.along - 1){
+    // Bakåt går inte att köra: börja om och kör fram till samma andel av den planerade vägen.
+    resetSim();
+    driveTo(frac * sim.g.len);
+  }else driveTo(target);
+  syncSlider();
+  render();
+}
+function syncSlider(){ $('#slider').value = Math.round(sim.along / sim.g.len * 1000); }
+
+function sideways(along, m){
+  const g = sim.g, {i, pt} = pointAlong(g, sim.path, along);
+  const a = g.loc[i], b = g.loc[Math.min(i + 1, g.loc.length - 1)];
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+  return [pt[0] + (-dy / L * m) / (111320 * g.k), pt[1] + (dx / L * m) / 110540];
+}
+
+// Räkna om vägen från en punkt utanför rutten och låt låtsasbilen följa den nya vägen.
+async function simReroute(from){
+  sim.busy = true; syncSimButtons();
+  gpsStatus('Räknar om vägen…');
+  const ok = await reroute(sim.T, from);
+  if(ok){
+    sim.path = sim.T.route.coords; sim.g = prepare(sim.path); sim.along = 0; sim.base = false;
+    gpsStatus('Ny väg beräknad.');
+  }else{
+    gpsStatus('Kunde inte räkna om vägen. Det kräver internet.');
+  }
+  sim.busy = false; syncSimButtons(); syncSlider(); render();
+  return ok;
+}
+
+function syncSimButtons(){
+  if(!sim) return;
+  document.querySelectorAll('#simBox button, #slider').forEach(el => el.disabled = sim.busy);
+  document.querySelectorAll('#paceSeg button').forEach(b =>
+    b.setAttribute('aria-pressed', String(Number(b.dataset.v) === sim.pace)));
+  $('#simOffline').textContent = sim.offline ? 'Internet: av' : 'Internet: på';
+  $('#simOffline').setAttribute('aria-pressed', String(!!sim.offline));
+}
+
+$('#slider').addEventListener('input', e => simGo(e.target.value / 1000));
+document.querySelectorAll('#quick button').forEach(b => b.addEventListener('click', () => simGo(Number(b.dataset.p))));
+document.querySelectorAll('#paceSeg button').forEach(b => b.addEventListener('click', () => {
+  sim.pace = Number(b.dataset.v); syncSimButtons(); render();
+}));
+
+$('#simTunnel').addEventListener('click', () => {
+  if(sim.busy) return;
+  // Bilen kör vidare i 3 minuter men inga positioner kommer fram.
+  sim.clock += 180000;
+  sim.along = Math.min(sim.g.len, sim.along + 180 * simSpeed());
+  syncSlider();
+  render();
+});
+$('#simOffline').addEventListener('click', () => {
+  sim.offline = !sim.offline;
+  if(!sim.offline) sim.T.netDown = false;
+  syncSimButtons();
+  render();
+});
+
+$('#simStand').addEventListener('click', () => {
+  const p = sim.T.pos;
+  for(let k = 0; k < 30; k++){ sim.clock += 30000; processFix(sim.T, p, 0, 5, sim.clock); }
+  render();
+});
+
+$('#simDetour').addEventListener('click', async () => {
+  if(sim.busy) return;
+  const start = sim.T.pos, off = sideways(sim.along, 1500), v = simSpeed();
+  sim.T.lastTry = sim.clock + 600000; // låt knappen räkna om, inte den automatiska kontrollen
+  for(let k = 1; k <= 6; k++){
+    const q = [start[0] + (off[0] - start[0]) * k / 6, start[1] + (off[1] - start[1]) * k / 6];
+    sim.clock += 250 / v * 1000;
+    processFix(sim.T, q, v, 5, sim.clock);
+  }
+  await simReroute(off);
+});
+
+document.querySelectorAll('[data-gap]').forEach(b => b.addEventListener('click', async () => {
+  if(sim.busy) return;
+  const kind = b.dataset.gap, v = simSpeed();
+  const driveMin = kind === 'lunch' ? 10 : kind === 'other' ? 32 : 40;
+  sim.along = Math.min(sim.g.len, sim.along + driveMin * 60 * v);
+  sim.clock += 40 * 60000;
+  const p = kind === 'other' ? sideways(sim.along, 1500) : pointAlong(sim.g, sim.path, sim.along).pt;
+  if(kind === 'other') sim.T.lastTry = sim.clock;
+  processFix(sim.T, p, kind === 'lunch' ? 0 : v, 5, sim.clock);
+  if(kind === 'other') await simReroute(p);
+  syncSlider();
+  render();
+}));
+
+function demoTrip(){
+  const a = [18.0649, 59.3326], b = [11.9746, 57.7089], n = 240, c = [];
+  for(let i = 0; i <= n; i++){
+    const t = i / n, w = Math.sin(Math.PI * t);
+    c.push([a[0] + (b[0] - a[0]) * t + Math.sin(t * Math.PI * 5) * 0.07 * w,
+            a[1] + (b[1] - a[1]) * t + Math.sin(t * Math.PI * 3 + 1) * 0.08 * w]);
+  }
+  let d = 0, dFood = 0;
+  const iFood = 108, v = 85 / 3.6;
+  for(let i = 1; i < c.length; i++){ d += hav(c[i - 1], c[i]); if(i === iFood) dFood = d; }
+  startTrip(newTrip({from: 'Stockholm', to: 'Göteborg (påhittad väg)', dest: b, coords: c,
+                     distance: d, duration: d / v, demo: true,
+                     stop: {frac: dFood / d, distance: dFood, duration: dFood / v},
+                     food: {name: 'Matstopp (påhittat)', pos: c[iFood], minutes: 45}}));
+}
+$('#demoBtn').addEventListener('click', demoTrip);
+
+/* ================= Geometri ================= */
+function hav(a, b){
+  const R = 6371000, r = Math.PI / 180;
+  const dLat = (b[1] - a[1]) * r, dLon = (b[0] - a[0]) * r;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+function prepare(coords){
+  const o = coords[0], k = Math.cos(o[1] * Math.PI / 180);
+  const loc = coords.map(c => [(c[0] - o[0]) * 111320 * k, (c[1] - o[1]) * 110540]);
+  const cum = [0];
+  for(let i = 1; i < loc.length; i++)
+    cum.push(cum[i - 1] + Math.hypot(loc[i][0] - loc[i - 1][0], loc[i][1] - loc[i - 1][1]));
+  return {o, k, loc, cum, len: cum[cum.length - 1] || 1};
+}
+function project(g, lon, lat){
+  const p = [(lon - g.o[0]) * 111320 * g.k, (lat - g.o[1]) * 110540];
+  let best = {d: Infinity, along: 0};
+  for(let i = 1; i < g.loc.length; i++){
+    const a = g.loc[i - 1], b = g.loc[i], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+    let t = l2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+    if(d < best.d) best = {d, along: g.cum[i - 1] + t * Math.sqrt(l2)};
+  }
+  return best;
+}
+function seek(cum, x){
+  let lo = 0, hi = cum.length - 1;
+  while(hi - lo > 1){ const m = (lo + hi) >> 1; if(cum[m] <= x) lo = m; else hi = m; }
+  const seg = cum[hi] - cum[lo];
+  return {lo, hi, t: seg ? Math.max(0, Math.min(1, (x - cum[lo]) / seg)) : 0};
+}
+function pointAlong(g, coords, along){
+  const {lo, hi, t} = seek(g.cum, along), a = coords[lo], b = coords[hi];
+  return {i: lo, pt: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]};
+}
+const atLeast2 = c => c.length > 1 ? c : [c[0], c[0]];
+const line = coords => ({type: 'Feature', properties: {}, geometry: {type: 'LineString', coordinates: atLeast2(coords)}});
+
+/* ================= Kartan ================= */
+const ATTR = '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank">OpenMapTiles</a> Data från <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>';
+const PAL = {
+  light: {land:'#EEF0DC', field:'#E2EBC3', wood:'#BCDB9C', town:'#F1D9C6', water:'#8CC4EC', road:'#FFFFFF',
+          border:'#9A8FB0', label:'#25304A', halo:'#FFFFFF', casing:'#2B3240', left:'#FFFFFF', done:'#F2B33D'},
+  dark:  {land:'#1E2A24', field:'#22322A', wood:'#25412D', town:'#3A3136', water:'#21486D', road:'#4C5768',
+          border:'#7E7596', label:'#E8EEF6', halo:'#1E2A24', casing:'#0A0E16', left:'#CBD3DF', done:'#F5C048'}
+};
+function isDark(){
+  const t = document.documentElement.dataset.theme;
+  return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+}
+const pal = () => isDark() ? PAL.dark : PAL.light;
+
+function mapStyle(c){
+  const src = {source: 'omt'};
+  return {
+    version: 8,
+    glyphs: 'hlk://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+    sources: {omt: {type: 'vector', url: 'hlk://tiles.openfreemap.org/planet', attribution: ATTR}},
+    layers: [
+      {id:'land', type:'background', paint:{'background-color': c.land}},
+      {id:'field', type:'fill', ...src, 'source-layer':'landcover',
+        filter:['in', ['get','class'], ['literal', ['farmland','grass']]], paint:{'fill-color': c.field}},
+      {id:'wood', type:'fill', ...src, 'source-layer':'landcover',
+        filter:['==', ['get','class'], 'wood'], paint:{'fill-color': c.wood}},
+      {id:'town', type:'fill', ...src, 'source-layer':'landuse',
+        filter:['in', ['get','class'], ['literal', ['residential','suburb','neighbourhood','commercial','industrial','retail']]],
+        paint:{'fill-color': c.town}},
+      {id:'water', type:'fill', ...src, 'source-layer':'water', paint:{'fill-color': c.water}},
+      {id:'river', type:'line', ...src, 'source-layer':'waterway',
+        filter:['in', ['get','class'], ['literal', ['river','canal']]],
+        paint:{'line-color': c.water, 'line-width':['interpolate', ['linear'], ['zoom'], 6, 0.6, 12, 3]}},
+      {id:'border', type:'line', ...src, 'source-layer':'boundary', filter:['==', ['get','admin_level'], 2],
+        paint:{'line-color': c.border, 'line-width': 1.5, 'line-dasharray': [3, 2]}},
+      {id:'roads', type:'line', ...src, 'source-layer':'transportation',
+        filter:['in', ['get','class'], ['literal', ['motorway','trunk','primary']]],
+        layout:{'line-cap':'round', 'line-join':'round'},
+        paint:{'line-color': c.road, 'line-width':['interpolate', ['linear'], ['zoom'], 5, 0.5, 10, 2.5, 14, 6]}},
+      {id:'places', type:'symbol', ...src, 'source-layer':'place',
+        filter:['in', ['get','class'], ['literal', ['city','town','village']]],
+        layout:{
+          'text-field':['coalesce', ['get','name:sv'], ['get','name']],
+          'text-font':['Noto Sans Bold'],
+          'text-size':['match', ['get','class'], 'city', 18, 'town', 15, 12],
+          'text-max-width': 8, 'text-padding': 8
+        },
+        paint:{'text-color': c.label, 'text-halo-color': c.halo, 'text-halo-width': 2}}
+    ]
+  };
+}
+
+let map = null, mapReady = null, startMarker, endMarker, carMarker, carEl, foodMarker, foodEl, foodShown = false;
+function badge(cls, emoji){
+  const el = document.createElement('div');
+  el.className = 'pin ' + cls;
+  if(emoji){ const s = document.createElement('span'); s.textContent = emoji; el.append(s); }
+  return el;
+}
+function mapMsg(t){ const m = $('#mapMsg'); m.textContent = t || ''; m.hidden = !t; }
+
+/* ================= Kartan utan uppkoppling =================
+   All kartdata hämtas via ett eget protokoll (hlk://) som först tittar i enhetens cache.
+   Vid start sparas kartbitarna för hela resan, så att kartan fungerar utan nät. */
+const TILE_CACHE = 'hlk-karta';
+let protocolAdded = false, prefetched = new Set(), mapCacheText = '', prefetchTimer = null;
+async function cachedGet(url, networkFirst){
+  let cache = null;
+  try{ if(window.caches) cache = await caches.open(TILE_CACHE); }catch(e){}
+  if(!networkFirst && cache){ const hit = await cache.match(url); if(hit) return hit; }
+  try{
+    const res = await fetch(url);
+    if(res.ok && cache) cache.put(url, res.clone()).catch(() => {});
+    return res;
+  }catch(e){
+    if(cache){ const hit = await cache.match(url); if(hit) return hit; }
+    throw e;
+  }
+}
+function addProtocol(){
+  if(protocolAdded) return;
+  protocolAdded = true;
+  maplibregl.addProtocol('hlk', async params => {
+    const url = 'https://' + params.url.slice('hlk://'.length);
+    const res = await cachedGet(url, params.type === 'json');
+    if(!res.ok) throw new Error('Kartdata svarade ' + res.status);
+    if(params.type === 'json'){
+      const j = await res.json();
+      if(Array.isArray(j.tiles)) j.tiles = j.tiles.map(u => u.startsWith('https://') ? 'hlk://' + u.slice(8) : u);
+      return {data: j};
+    }
+    return {data: await res.arrayBuffer()};
+  });
+}
+function schedulePrefetch(){
+  clearTimeout(prefetchTimer);
+  prefetchTimer = setTimeout(() => prefetchTiles().catch(() => {}), 1500);
+}
+async function prefetchTiles(){
+  if(!map || !window.caches || navigator.onLine === false) return;
+  const src = map.getSource('omt'), tpl = src && src.tiles && src.tiles[0];
+  if(!tpl) return;
+  const b = map.getBounds(), padX = (b.getEast() - b.getWest()) * 0.3, padY = (b.getNorth() - b.getSouth()) * 0.3;
+  const W = b.getWest() - padX, E = b.getEast() + padX;
+  const N = Math.min(85, b.getNorth() + padY), S = Math.max(-85, b.getSouth() - padY);
+  const z0 = Math.floor(map.getZoom()), urls = [];
+  const tx = (lon, n) => Math.floor((lon + 180) / 360 * n);
+  const ty = (lat, n) => { const r = lat * Math.PI / 180; return Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n); };
+  for(const z of [z0 - 1, z0, z0 + 1]){
+    if(z < 0 || z > 14) continue;
+    const n = 2 ** z, x0 = Math.max(0, tx(W, n)), x1 = Math.min(n - 1, tx(E, n)), y0 = Math.max(0, ty(N, n)), y1 = Math.min(n - 1, ty(S, n));
+    const level = [];
+    for(let x = x0; x <= x1; x++) for(let y = y0; y <= y1; y++)
+      level.push('https://' + tpl.slice('hlk://'.length).replace('{z}', z).replace('{x}', x).replace('{y}', y));
+    if(urls.length + level.length > 300) break;   // inte för många kartbitar
+    urls.push(...level);
+  }
+  const todo = urls.filter(u => !prefetched.has(u));
+  let i = 0;
+  const worker = async () => { while(i < todo.length){ const u = todo[i++]; try{ await cachedGet(u); prefetched.add(u); }catch(e){} } };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  mapCacheText = `Kartan för resan är sparad i enheten (${prefetched.size} kartbitar).`;
+  render();
+}
+
+function ensureMap(){
+  if(mapReady) return mapReady;
+  if(!window.maplibregl){
+    mapMsg('Kartan kunde inte laddas. Kontrollera uppkopplingen och ladda om sidan.');
+    return Promise.reject(new Error('maplibre saknas'));
+  }
+  try{
+    addProtocol();
+    map = new maplibregl.Map({
+      container: 'map', style: mapStyle(pal()), interactive: false,
+      attributionControl: false, fadeDuration: 0
+    });
+    map.addControl(new maplibregl.AttributionControl({compact: true}), 'bottom-right');
+    startMarker = new maplibregl.Marker({element: badge('start')});
+    endMarker = new maplibregl.Marker({element: badge('end', '🏁')});
+    carEl = badge('car', '🚗');
+    carMarker = new maplibregl.Marker({element: carEl});
+    foodEl = badge('food', '🍽️');
+    foodMarker = new maplibregl.Marker({element: foodEl});
+    map.on('resize', fitRoute);
+    map.on('error', e => console.warn('Kartfel:', e && e.error));
+  }catch(e){
+    map = null;
+    mapMsg('Kartan kan inte visas i den här miljön. Öppna appen i Safari eller Chrome, eller från GitHub Pages.');
+    mapReady = Promise.reject(e);
+    return mapReady;
+  }
+  let loaded = false;
+  mapReady = new Promise(res => map.once('load', () => { loaded = true; res(); }));
+  // Om kartdatan inte kommer fram inom 15 sekunder, säg det i stället för att visa en tom yta.
+  setTimeout(() => {
+    if(!loaded) mapMsg('Kartan laddas inte. Kontrollera uppkopplingen.');
+  }, 15000);
+  mapReady.then(() => mapMsg(''));
+  return mapReady;
+}
+
+function applyPalette(){
+  if(!map || !map.isStyleLoaded()) return;
+  const c = pal();
+  const set = (id, prop, v) => { if(map.getLayer(id)) map.setPaintProperty(id, prop, v); };
+  set('land','background-color',c.land); set('field','fill-color',c.field); set('wood','fill-color',c.wood);
+  set('town','fill-color',c.town); set('water','fill-color',c.water); set('river','line-color',c.water);
+  set('border','line-color',c.border); set('roads','line-color',c.road);
+  set('places','text-color',c.label); set('places','text-halo-color',c.halo);
+  set('route-casing','line-color',c.casing); set('done-casing','line-color',c.casing); set('route-left','line-color',c.left); set('route-done','line-color',c.done); set('guess-line','line-color',c.done);
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyPalette);
+
+/* ================= Kartan: rutt, spår och bil ================= */
+const multi = runs => ({type: 'Feature', properties: {}, geometry: {type: 'MultiLineString', coordinates: runs.map(atLeast2)}});
+const EMPTY = {type: 'FeatureCollection', features: []};
+
+function placeRoute(){
+  const c = pal();
+  if(!map.getSource('route')){
+    map.addSource('route', {type: 'geojson', data: line(trip.route.coords)});
+    map.addSource('done', {type: 'geojson', data: EMPTY});
+    map.addSource('guess', {type: 'geojson', data: EMPTY});
+    const lay = {'line-cap': 'round', 'line-join': 'round'};
+    map.addLayer({id:'route-casing', type:'line', source:'route', layout: lay, paint:{'line-color': c.casing, 'line-width': 15}}, 'places');
+    map.addLayer({id:'route-left', type:'line', source:'route', layout: lay, paint:{'line-color': c.left, 'line-width': 9}}, 'places');
+    map.addLayer({id:'guess-line', type:'line', source:'guess', layout: {'line-cap': 'butt'},
+                  paint:{'line-color': c.done, 'line-width': 6, 'line-dasharray': [1.4, 1.2]}}, 'places');
+    map.addLayer({id:'done-casing', type:'line', source:'done', layout: lay, paint:{'line-color': c.casing, 'line-width': 15}}, 'places');
+    map.addLayer({id:'route-done', type:'line', source:'done', layout: lay, paint:{'line-color': c.done, 'line-width': 9}}, 'places');
+  }
+  startMarker.setLngLat(trip.startPos).addTo(map);
+  endMarker.setLngLat(trip.dest).addTo(map);
+  carMarker.setLngLat(trip.startPos).addTo(map);
+  fittedVersion = null;
+  map.resize();
+}
+
+// Hela resan ska alltid synas: start, vägen vi har kört och vägen kvar.
+function fitRoute(){
+  if(!map || !trip || !lastS) return;
+  const b = new maplibregl.LngLatBounds();
+  lastS.runs.forEach(run => run.forEach(c => b.extend(c)));
+  lastS.ahead.forEach(c => b.extend(c));
+  b.extend(trip.dest);
+  if(lastS.food) b.extend(lastS.food.pos);
+  const w = map.getContainer().clientWidth;
+  const pad = Math.max(48, Math.min(90, w * 0.09));
+  map.fitBounds(b, {padding: pad, duration: 0, maxZoom: 14});
+}
+
+function renderMap(S){
+  if(!map || !map.getSource('done')) return;
+  map.getSource('done').setData(multi(S.runs));
+  map.getSource('guess').setData(S.guessed.length ? multi(S.guessed) : EMPTY);
+  map.getSource('route').setData(line(S.ahead));
+  carMarker.setLngLat(S.pos);
+  if(S.food){
+    foodMarker.setLngLat(S.food.pos);
+    if(!foodShown){ foodMarker.addTo(map); foodShown = true; }
+    foodEl.classList.toggle('past', !S.foodActive);
+  }else if(foodShown){ foodMarker.remove(); foodShown = false; }
+  const look = S.ahead[Math.min(6, S.ahead.length - 1)];
+  carEl.classList.toggle('right', look[0] >= S.pos[0]);
+  carEl.classList.toggle('est', S.estimated);
+  if(fittedVersion !== S.version){ fittedVersion = S.version; fitRoute(); schedulePrefetch(); }
+}
+
+/* ================= Prickarna =================
+   Tända prickar = tid kvar. Släckta = körtid hittills. Stopp ändrar ingenting.
+   En prick tänds bara igen om tiden kvar har ökat med mer än tre minuter. */
+function dotUnit(){
+  const D = trip.plan.duration;
+  return D / 600 <= 24 ? 600 : D / 1800 <= 24 ? 1800 : 3600;
+}
+function renderDots(S, remSec, foodSec){
+  const unit = dotUnit();
+  const target = remSec <= 1 ? 0 : Math.ceil(remSec / unit - 1e-6);
+  let grew = 0;
+  if(shownLeft == null || target < shownLeft) shownLeft = target;
+  else if(target > shownLeft && remSec > shownLeft * unit + 180){ grew = target - shownLeft; shownLeft = target; }
+  const passed = Math.max(0, Math.floor(S.movingSec / unit + 1e-6));
+  const n = Math.max(1, passed + shownLeft);
+  const box = $('#dots');
+  while(box.children.length < n){ const s = document.createElement('span'); s.className = 'dot'; box.append(s); }
+  while(box.children.length > n) box.lastChild.remove();
+  // Pricken där maten kommer får en tallrik, så att barnen kan räkna prickar fram till maten.
+  const fi = foodSec == null ? -1 : Math.min(n - 1, passed + Math.max(0, Math.ceil(foodSec / unit - 1e-6) - 1));
+  // Den första tända pricken är den pågående: den töms i takt med tiden kvar inom den.
+  const part = shownLeft > 0 ? passed : -1;
+  const fill = Math.max(0, Math.min(1, (remSec - (shownLeft - 1) * unit) / unit));
+  [...box.children].forEach((el, i) => {
+    el.classList.toggle('gone', i < passed);
+    el.classList.toggle('part', i === part);
+    if(i === part) el.style.setProperty('--f', fill.toFixed(3)); else el.style.removeProperty('--f');
+    el.classList.toggle('food', i === fi);
+    el.textContent = i === fi ? '🍽️' : '';
+    if(grew && i >= n - grew){ el.classList.remove('back'); void el.offsetWidth; el.classList.add('back'); }
+  });
+  $('#dotNote').textContent = 'Varje prick är ' + (unit === 600 ? '10 minuter' : unit === 1800 ? '30 minuter' : '1 timme');
+}
+
+function fmtDur(sec){
+  const m = Math.round(sec / 60);
+  if(m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
+}
+const clock = t => new Date(t).toLocaleTimeString('sv-SE', {hour: '2-digit', minute: '2-digit'});
+
+/* ================= Rendering ================= */
+function render(){
+  if(!trip) return;
+  const T = active(), S = stateOf(T);
+  lastS = S;
+  const remSec = S.remM < 100 ? 0 : S.remPlannedSec * S.pace.pace;
+  renderMap(S);
+
+  $('#pausePill').hidden = !S.stopped;
+  $('#pausePill').textContent = S.atFood ? 'Nu äter vi! 🍽️' : 'Vi har stannat en stund';
+  const foodSec = S.toFoodSec == null ? null : S.toFoodSec * S.pace.pace;
+  $('#foodLine').hidden = foodSec == null;
+  if(foodSec != null) $('#foodLine').textContent = foodText(foodSec, S.toFoodM);
+  $('#skipFood').hidden = !S.foodActive;
+  $('#addFoodBox').hidden = S.foodActive;
+  $('#big').textContent = timeText(remSec, S.remM);
+  $('#small').textContent = `${fmtKm(S.remM / 1000)} kvar`;
+  renderDots(S, remSec, foodSec);
+  updateGames(T, S);
+
+  const pct = Math.round((S.pace.raw - 1) * 100);
+  const paceTxt = T.obs.sec < 300 ? 'räknas efter fem minuters körning'
+    : Math.abs(pct) < 5 ? 'som beräknat'
+    : `${Math.abs(pct)} % ${pct > 0 ? 'långsammare' : 'snabbare'} än beräknat`;
+  const lines = [
+    T.isSim ? `Simulerad klocka ${clock(S.now)}, avfärd ${clock(T.startTime)}.` : `Avfärd ${clock(T.startTime)}.`,
+    `Kört ${fmtKm(S.drivenM / 1000)} på ${fmtDur(S.movingSec)}. Stått still ${fmtDur(S.stopSec)}` +
+      (S.guessedStopSec > 60 ? `, varav ${fmtDur(S.guessedStopSec)} uppskattat.` : '.'),
+    `Takt: ${paceTxt}.`,
+    `Beräknad total restid utan stopp: ${fmtDur(S.movingSec + remSec)}.`,
+    `Beräknad ankomst ungefär ${clock(S.now + (remSec + (foodSec != null ? T.food.minutes * 60 : 0)) * 1000)}` +
+      (foodSec != null ? `, med ${T.food.minutes} minuters matstopp vid ${T.food.name}.` : '.') +
+      (T.food && T.food.skipped ? ' Matstoppet är överhoppat.' : '')
+  ];
+  if(S.gaps) lines.push(`Appen har varit i bakgrunden ${S.gaps === 1 ? '1 gång' : S.gaps + ' gånger'}. Den tiden är ifylld i efterhand.`);
+  if(S.noGpsSec != null && S.noGpsSec > 15)
+    lines.push(`Ingen GPS sedan ${clock(T.lastFix.t)}.` + (S.estimated ? ' Bilen flyttas uppskattat längs vägen och visas halvgenomskinlig.' : ''));
+  if(S.netDown)
+    lines.push('Ingen uppkoppling. Rutten kan inte räknas om just nu' +
+      (S.offM > 200 ? ', så tid kvar räknar med vägen tillbaka till rutten.' : '.'));
+  lines.push(`Rutten räknades senast ${clock(T.route.at)}.` + (S.offM > 200 ? ` Ni är ${fmtKm(S.offM / 1000)} från vägen.` : ''));
+  if(mapCacheText) lines.push(mapCacheText);
+  $('#stats').textContent = lines.join(' ');
+  if(mode === 'sim') $('#simLabel').textContent =
+    `${Math.round(sim.along / sim.g.len * 100)} % av ${sim.base ? 'den planerade vägen' : 'den omräknade vägen'}`;
+
+  if(S.remM < 100){ if(!arrivedShown){ arrivedShown = true; $('#arrive').classList.add('on'); } }
+  else { arrivedShown = false; $('#arrive').classList.remove('on'); }
+}
+
+function setMode(m){
+  mode = m;
+  shownLeft = null; fittedVersion = null;
+  document.querySelectorAll('#modeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === m)));
+  $('#simBox').hidden = m !== 'sim';
+  document.body.classList.toggle('smooth', m === 'gps');
+  if(m === 'sim') resetSim();
+  if(m === 'gps') startGps(); else stopGps();
+  render();
+}
+document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.v)));
+
+/* ================= Spara ================= */
+function save(){ try{ if(trip) localStorage.setItem(KEY, JSON.stringify(trip)); }catch(e){} }
+let saveTimer = null;
+function saveSoon(){ if(!saveTimer) saveTimer = setTimeout(() => { saveTimer = null; save(); }, 15000); }
+window.addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') save(); });
+
+function fmtKm(km){
+  return km.toLocaleString('sv-SE', {maximumFractionDigits: km < 10 ? 1 : 0}) + ' km';
+}
+function foodText(sec, metersLeft){
+  if(metersLeft < 300) return '🍽️ Nu är vi nästan vid maten!';
+  let m = Math.round(sec / 60);
+  if(m < 1) return '🍽️ Maten om mindre än 1 minut';
+  if(m <= 20) return `🍽️ Maten om ${m} ${m === 1 ? 'minut' : 'minuter'}`;
+  m = Math.round(m / 5) * 5;
+  if(m < 60) return `🍽️ Maten om ungefär ${m} minuter`;
+  const h = Math.floor(m / 60), r = m % 60, hs = h === 1 ? '1 timme' : `${h} timmar`;
+  return r ? `🍽️ Maten om ungefär ${hs} och ${r} minuter` : `🍽️ Maten om ungefär ${hs}`;
+}
+function timeText(sec, metersLeft){
+  if(metersLeft < 300) return 'Nu är vi nästan framme!';
+  let m = Math.round(sec / 60);
+  if(m < 1) return 'Mindre än 1 minut kvar';
+  if(m <= 20) return `${m} ${m === 1 ? 'minut' : 'minuter'} kvar`;
+  m = Math.round(m / 5) * 5;
+  if(m < 60) return `Ungefär ${m} minuter kvar`;
+  const h = Math.floor(m / 60), r = m % 60;
+  const hs = h === 1 ? '1 timme' : `${h} timmar`;
+  return r ? `Ungefär ${hs} och ${r} minuter kvar` : `Ungefär ${hs} kvar`;
+}
+/* ================= Skärmen tänd ================= */
+function wakeStatus(){
+  $('#wakeStatus').textContent = wake
+    ? 'Skärmen hålls tänd under resan.'
+    : ('wakeLock' in navigator
+        ? 'Skärmen kan släckas. Tryck var som helst i appen så försöker den hålla skärmen tänd igen.'
+        : 'Den här webbläsaren kan inte hålla skärmen tänd. Stäng av automatisk låsning i inställningarna.');
+}
+async function keepAwake(){
+  try{
+    if('wakeLock' in navigator && document.visibilityState === 'visible' && !wake){
+      wake = await navigator.wakeLock.request('screen');
+      wake.addEventListener('release', () => { wake = null; wakeStatus(); });
+    }
+  }catch(e){ /* kräver ofta en tryckning först */ }
+  wakeStatus();
+}
+document.addEventListener('visibilitychange', () => { if(trip && document.visibilityState === 'visible') keepAwake(); });
+document.addEventListener('click', () => { if(trip && !wake) keepAwake(); });
+
+
+
+/* ================= Spel under resan =================
+   Spelen låses upp längs vägen. Upplåsningen sker vid fasta punkter räknat från resmålet (planerad
+   tid kvar), så att två enheter i samma bil låser upp samtidigt. Vilket spel som kommer bestäms av
+   kategorin för just det steget och av en slumpgenerator med fast frö: resans startdatum och
+   resmålets koordinater. Samma dag och resmål ger samma ordning på alla enheter. */
+const GAMES = [
+  {id: 'bilbingo', t: 'Bilbingo', i: '🐄', c: 'titta'},
+  {id: 'memory', t: 'Memory', i: '🐶', c: 'lugn'}, {id: 'pussel', t: 'Pussel', i: '🧩', c: 'lugn'},
+  {id: 'vadkommersen', t: 'Vad kommer sen?', i: '🍎', c: 'lugn'}, {id: 'forstabokstaven', t: 'Första bokstaven', i: '🔤', c: 'lugn'},
+  {id: 'rakna', t: 'Räkna', i: '🔢', c: 'lugn'}, {id: 'farglagg', t: 'Färglägg', i: '🎨', c: 'lugn'},
+  {id: 'prickar', t: 'Prick till prick', i: '✏️', c: 'lugn'}, {id: 'koppla', t: 'Koppla ihop', i: '🔗', c: 'lugn'},
+  {id: 'klapadockan', t: 'Klä på dockan', i: '👗', c: 'lugn'}, {id: 'byggbilen', t: 'Bygg bilen', i: '🏎️', c: 'lugn'},
+  {id: 'slangbellan', t: 'Slangbellan', i: '🎯', c: 'aktiv'}, {id: 'ballonger', t: 'Ballonger', i: '🎈', c: 'aktiv'},
+  {id: 'helikoptern', t: 'Helikoptern', i: '🚁', c: 'aktiv'}, {id: 'kurragomma', t: 'Kurragömma', i: '🐹', c: 'aktiv'},
+  {id: 'godis', t: 'Godisbyte', i: '🍬', c: 'aktiv'}, {id: 'parkera', t: 'Parkera', i: '🅿️', c: 'aktiv'},
+  {id: 'musik', t: 'Musik', i: '🎹', c: 'aktiv'}, {id: 'panelen', t: 'Kontrollpanelen', i: '🎛️', c: 'aktiv'}
+];
+const gameById = id => GAMES.find(g => g.id === id);
+// Ändras spellistan ändras ordningen; versionen ingår i fröet och i kontrollkoden.
+const GAMES_VERSION = 1;
+const GSET_KEY = 'hur-langt-kvar-spel';
+let gset = {level: 'small', sound: true, on: true};
+try{ Object.assign(gset, JSON.parse(localStorage.getItem(GSET_KEY) || '{}')); }catch(e){}
+const saveGset = () => { try{ localStorage.setItem(GSET_KEY, JSON.stringify(gset)); }catch(e){} };
+
+// Slumpgenerator med fast frö (mulberry32) och en enkel hash (FNV-1a).
+function hash32(str){ let h = 2166136261; for(let i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed){ let a = seed; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function seedOf(T){
+  const d = new Date(T.startTime), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}|${T.dest[0].toFixed(2)},${T.dest[1].toFixed(2)}|v${GAMES_VERSION}`;
+}
+function orderOf(T, cat){
+  const ids = GAMES.filter(g => g.c === cat).map(g => g.id), r = rng(hash32(seedOf(T) + '|' + cat));
+  for(let i = ids.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
+  return ids;
+}
+// Kontrollkoden i vuxenpanelen: samma kod på båda enheterna betyder samma spelordning.
+const codeOf = T => { const h = hash32(seedOf(T)).toString(36).toUpperCase().padStart(4, '0'); return h.slice(0, 2) + '-' + h.slice(2, 4); };
+function gmOf(T){ if(!T.gm) T.gm = {startRem: T.plan.duration, list: [], bonus: 0, ptr: {}}; return T.gm; }
+// Nytt spel varannan prick vid 10-minutersprickar, annars vid varje prick.
+const gInterval = () => { const u = dotUnit(); return u === 600 ? 1200 : u; };
+// Kategori för steg k: först Bilbingo, sedan ett lugnt spel, sedan varvat aktivt och lugnt.
+// Sista 30 minuterna och efter klockan 19 bara lugna spel.
+function catFor(k, milestoneRem, now){
+  if(k === 0) return 'titta';
+  if(k === 1 || milestoneRem <= 1800 || new Date(now).getHours() >= 19) return 'lugn';
+  return k % 2 === 0 ? 'aktiv' : 'lugn';
+}
+// Nästa spel i kategorins ordning, som inte redan ligger på hyllan. ptr = var i ordningen varje kategori är.
+function pickGame(T, ptr, list, k, milestoneRem, now){
+  const cat = catFor(k, milestoneRem, now), ord = orderOf(T, cat), keep = list.slice(-1).map(x => x.id);
+  let p = ptr[cat] || 0;
+  for(let n = 0; n < ord.length; n++){
+    const id = ord[(p + n) % ord.length];
+    if(!keep.includes(id)){ ptr[cat] = p + n + 1; return id; }
+  }
+  ptr[cat] = p + 1; return ord[p % ord.length];
+}
+let gAudio = null;
+function chime(){
+  if(!gset.sound) return;
+  try{
+    gAudio = gAudio || new (window.AudioContext || window.webkitAudioContext)();
+    [784, 988, 1319].forEach((f, i) => { const o = gAudio.createOscillator(), g = gAudio.createGain(), t = gAudio.currentTime + i * 0.12;
+      o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      o.connect(g).connect(gAudio.destination); o.start(t); o.stop(t + 0.4); });
+  }catch(e){}
+}
+// iPad tillåter ljud först efter en beröring; väck ljudet vid första tryck.
+document.addEventListener('pointerdown', () => { try{ if(gAudio && gAudio.state === 'suspended') gAudio.resume(); else if(!gAudio && gset.sound) gAudio = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }, {passive: true});
+function sayGame(text){
+  if(!gset.sound || !window.speechSynthesis) return;
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'sv-SE'; u.rate = 0.95;
+    const v = speechSynthesis.getVoices().find(x => x.lang && x.lang.replace('_', '-').startsWith('sv')); if(v) u.voice = v; speechSynthesis.speak(u); }catch(e){}
+}
+let shelfKey = '', gInfo = null;
+function updateGames(T, S){
+  const shelf = $('#shelf');
+  if(!gset.on){ shelf.innerHTML = ''; shelfKey = ''; [...$('#dots').children].forEach(d => { delete d.dataset.g; d.classList.remove('gnextdot'); }); gInfo = null; gameStatusText(T); return; }
+  const G = gmOf(T), iv = gInterval(), now = S.now;
+  const rem = S.remM < 100 ? 0 : S.remPlannedSec;
+  // Punkterna ligger på j × intervallet från resmålet; den första minst 15 minuter in på resan.
+  const J0 = Math.floor((G.startRem - 900) / iv);
+  const c = Math.max(1, Math.ceil(rem / iv - 1e-6));
+  const reached = Math.max(0, J0 - c + 1) + G.bonus;
+  let added = null;
+  while(G.list.length < reached){
+    const k = G.list.length, j = J0 - k + G.bonus;
+    const id = pickGame(T, G.ptr, G.list, k, Math.max(0, j) * iv, now);
+    G.list.push({id, at: now}); added = id;
+  }
+  if(added){ if(T === trip) save(); chime(); setTimeout(() => sayGame('Nu finns ett nytt spel: ' + gameById(added).t + '!'), 500); }
+  // Nästa punkt och förhandsvisning av de kommande spelen (utan att flytta något på riktigt).
+  const jn = c - 1, hasNext = jn >= 1 && jn <= J0;
+  const ptr = Object.assign({}, G.ptr), list = G.list.slice(), upcoming = [];
+  for(let q = 0; q < 3; q++){
+    const j = jn - q; if(j < 1 || j > J0) break;
+    const id = pickGame(T, ptr, list, list.length, j * iv, now); list.push({id}); upcoming.push({id, j});
+  }
+  const toNext = hasNext ? rem - jn * iv : null, p = hasNext ? Math.max(0, Math.min(1, 1 - toNext / iv)) : 0;
+  gInfo = {upcoming, toNext, count: G.list.length, J0};
+  // Hyllan: de två senaste spelen, och nästa spel som en grå ikon med en ring som fylls.
+  const avail = G.list.slice(-2), sleepy = avail.length === 2 && hasNext && toNext < 300;
+  const key = avail.map(x => x.id).join() + '|' + sleepy + '|' + (upcoming[0] ? upcoming[0].id : '') + '|' + Math.round(p * 50);
+  if(key !== shelfKey){
+    const fresh = added;
+    shelfKey = key;
+    shelf.innerHTML = '';
+    avail.forEach((x, idx) => {
+      const g = gameById(x.id), b = document.createElement('button');
+      b.type = 'button'; b.className = 'gbtn' + (sleepy && idx === 0 ? ' sleepy' : '') + (x.id === fresh ? ' new' : '');
+      b.innerHTML = `<span class="gi">${g.i}</span><span></span>`; b.lastChild.textContent = g.t;
+      b.setAttribute('aria-label', 'Spela ' + g.t + (sleepy && idx === 0 ? ', somnar snart' : ''));
+      b.addEventListener('click', () => openGame(x.id));
+      shelf.append(b);
+    });
+    if(upcoming[0]){
+      const g = gameById(upcoming[0].id), d = document.createElement('div');
+      d.className = 'gnext'; d.setAttribute('aria-label', 'Nästa spel kommer snart');
+      d.innerHTML = `<div class="ring" style="--p:${p.toFixed(3)}"><span>${g.i}</span></div>`;
+      shelf.append(d);
+    }
+  }
+  // Ikoner ovanför prickarna där de kommande spelen låses upp.
+  const unit = dotUnit(), dots = [...$('#dots').children], n = dots.length;
+  dots.forEach(d => { delete d.dataset.g; d.classList.remove('gnextdot'); });
+  upcoming.forEach((u, q) => {
+    const i = n - Math.round(u.j * iv / unit) - 1;
+    if(i >= 0 && i < n && !dots[i].classList.contains('food')){ dots[i].dataset.g = gameById(u.id).i; dots[i].classList.toggle('gnextdot', q === 0); }
+  });
+  gameStatusText(T);
+}
+function gameStatusText(T){
+  const el = $('#gameStatus'); if(!el) return;
+  if(!gset.on){ el.textContent = 'Spelen är avstängda på den här enheten.'; return; }
+  const G = gmOf(T), parts = [`Dagens spelordning: ${codeOf(T)}. Samma kod på båda enheterna betyder samma spel.`];
+  if(!gInfo || gInfo.J0 < 1 && !G.list.length) parts.push('Resan är för kort för att spel ska låsas upp av sig själva; använd knappen nedan.');
+  else{
+    parts.push(`${G.list.length} ${G.list.length === 1 ? 'spel upplåst' : 'spel upplåsta'}.`);
+    if(gInfo.upcoming[0] && gInfo.toNext != null) parts.push(`Nästa: ${gameById(gInfo.upcoming[0].id).t} om cirka ${Math.max(1, Math.round(gInfo.toNext / 60))} min körning.`);
+    else parts.push('Inga fler spel låses upp på den här resan.');
+  }
+  el.textContent = parts.join(' ');
+}
+function openGame(id){
+  const g = gameById(id);
+  $('#gameName').textContent = g.i + ' ' + g.t;
+  $('#gameFrame').src = `spel.html?id=${encodeURIComponent(id)}&level=${gset.level}&sound=${gset.sound ? 1 : 0}`;
+  $('#gameOv').hidden = false;
+  $('#panel').classList.remove('on'); $('#adultBtn').setAttribute('aria-expanded', 'false');
+}
+function closeGame(){
+  const fr = $('#gameFrame');
+  try{ fr.contentWindow && fr.contentWindow.postMessage({hlk: 'stoppa'}, location.origin); }catch(e){}
+  fr.src = 'about:blank';
+  $('#gameOv').hidden = true;
+  render();
+}
+$('#gameBack').addEventListener('click', closeGame);
+function paintGameSegs(){
+  document.querySelectorAll('#lvlSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === gset.level)));
+  document.querySelectorAll('#gsoundSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === (gset.sound ? '1' : '0'))));
+  document.querySelectorAll('#gonSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === (gset.on ? '1' : '0'))));
+  $('#unlockBtn').hidden = !gset.on;
+}
+document.querySelectorAll('#lvlSeg button').forEach(b => b.addEventListener('click', () => { gset.level = b.dataset.v; saveGset(); paintGameSegs(); }));
+document.querySelectorAll('#gsoundSeg button').forEach(b => b.addEventListener('click', () => { gset.sound = b.dataset.v === '1'; saveGset(); paintGameSegs(); }));
+document.querySelectorAll('#gonSeg button').forEach(b => b.addEventListener('click', () => { gset.on = b.dataset.v === '1'; saveGset(); paintGameSegs(); shelfKey = ''; render(); }));
+$('#unlockBtn').addEventListener('click', () => { if(!trip) return; gmOf(active()).bonus++; shelfKey = ''; render(); });
+paintGameSegs();
+
+/* ================= Starta och avsluta ================= */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+}
+function startTrip(t, restored){
+  trip = t;
+  if(!restored){
+    try{ if(window.caches) caches.delete(TILE_CACHE).catch(() => {}); }catch(e){}
+    prefetched = new Set(); mapCacheText = '';
+  }
+  Object.assign(trip, {rerouting: false, offSince: null});
+  arrivedShown = false; lastS = null;
+  save();
+  $('#destName').textContent = 'Till ' + t.to;
+  show('trip');
+  mapMsg('');
+  setMode(t.demo ? 'sim' : 'gps');
+  ensureMap().then(() => { if(trip === t){ placeRoute(); render(); } }).catch(() => {});
+  keepAwake();
+}
+function endTrip(){
+  if(!$('#gameOv').hidden) closeGame();
+  stopGps();
+  trip = null;
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  if(wake){ wake.release(); wake = null; }
+  $('#panel').classList.remove('on');
+  $('#adultBtn').setAttribute('aria-expanded', 'false');
+  $('#arrive').classList.remove('on');
+  show('setup');
+}
+$('#endBtn').addEventListener('click', endTrip);
+// Lägg till ett matstopp under resan: sök nära bilen och räkna om vägen via det.
+let addFoodPlace = null;
+searchBox($('#addFoodInput'), $('#addFoodList'), r => addFoodPlace = r, () => trip ? (active().pos || active().startPos) : null);
+$('#addFoodBtn').addEventListener('click', async () => {
+  const T = active(), msg = $('#addFoodMsg'), btn = $('#addFoodBtn');
+  if(!T || foodActive(T)) return;
+  btn.disabled = true;
+  msg.textContent = '';
+  const from = T.pos || T.startPos, prev = T.food;
+  try{
+    let fp = addFoodPlace;
+    if(!fp){
+      const q = $('#addFoodInput').value.trim();
+      if(!q) throw new Error('Skriv var ni vill äta.');
+      msg.textContent = 'Letar efter matstoppet…';
+      const r = await geocode(q, undefined, from);
+      if(!r.length) throw new Error('Hittade inte matstoppet. Prova att lägga till orten.');
+      fp = r[0];
+    }
+    T.food = {name: fp.name, pos: [fp.lon, fp.lat], minutes: Number($('#addFoodMin').value), reached: false, skipped: false};
+    msg.textContent = 'Räknar om vägen via matstoppet…';
+    const ok = T.isSim ? await simReroute(from) : await reroute(T, from);
+    if(!ok){ T.food = prev; throw new Error('Kunde inte räkna om vägen. Det kräver internet.'); }
+    if(!T.isSim) save();
+    msg.textContent = '';
+    $('#addFoodInput').value = '';
+    $('#addFoodList').replaceChildren();
+    addFoodPlace = null;
+  }catch(e){
+    msg.textContent = e instanceof TypeError ? 'Fick ingen kontakt med sök- eller vägtjänsten.' : e.message;
+  }finally{
+    btn.disabled = false;
+    render();
+  }
+});
+
+$('#skipFood').addEventListener('click', async () => {
+  const T = active();
+  if(!foodActive(T)) return;
+  T.food.skipped = true;
+  if(T.isSim) await simReroute(T.pos || T.startPos);
+  else { save(); await reroute(T, T.pos || T.startPos); }
+  render();
+});
+$('#adultBtn').addEventListener('click', () => {
+  const on = $('#panel').classList.toggle('on');
+  $('#adultBtn').setAttribute('aria-expanded', String(on));
+});
+$('#arrive').addEventListener('click', () => $('#arrive').classList.remove('on'));
+
+// Spara appen i enheten så att den går att öppna utan uppkoppling (kräver https eller localhost och filen sw.js bredvid).
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+  navigator.serviceWorker.register('sw.js').catch(e => console.warn('Kunde inte spara appen för användning utan nät.', e));
+}
+
+// Fortsätt en pågående resa om sidan laddas om.
+try{
+  const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+  if(saved && saved.route && saved.plan && saved.runs) startTrip(saved, true);
+}catch(e){}
+</script>
+</body>
+</html>

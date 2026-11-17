@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spel – Hur långt är det kvar</title>
+<!-- Spelvärden: huvudappen visar den här sidan i en ram när ett spel öppnas. Spelet körs isolerat, så
+     att appens och spelets utseende inte påverkar varandra. Adressen anger spel, nivå och ljud:
+     spel.html?id=memory&level=small&sound=1 -->
+<style>
+:root{
+  --sky:#DCEAF6; --done:#F2B33D; --ink:#1D2842; --muted:#56617A; --card:#FFFFFF; --accent:#2F6FD6; --line:#C6D1DF; --edge:#3B424D;
+  color-scheme:light; box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --sky:#131F36; --done:#F5C048; --ink:#EDF1F8; --muted:#A6B1C4; --card:#1A2640; --accent:#80B1FF; --line:#2D3B57; --edge:#0C111C; color-scheme:dark; }
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:"Baloo 2",ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--sky);color:var(--ink);overflow:hidden}
+button,select{font:inherit;color:inherit}
+[hidden]{display:none!important}
+#root{position:absolute;inset:0}
+#err{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;font-weight:700;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="err" hidden></div>
+<script>
+(function(){
+  // Vilken fil varje spel ligger i. Slangbellan behöver även fysikbiblioteket.
+  const FILES = {
+    bilbingo: ['bilbingo.js'], memory: ['memory.js'], vadkommersen: ['monster.js'], pussel: ['pussel.js'],
+    kurragomma: ['kurragomma.js'], forstabokstaven: ['forstabokstaven.js'], slangbellan: ['lib/matter.min.js', 'slangbellan.js'],
+    ballonger: ['ballonger.js'], helikoptern: ['helikoptern.js'], klapadockan: ['klapadockan.js'], rakna: ['rakna.js'],
+    parkera: ['parkera.js'], godis: ['godis.js'], farglagg: ['farglagg.js'], prickar: ['prickar.js'], musik: ['musik.js'],
+    byggbilen: ['byggbilen.js'], koppla: ['koppla.js'], panelen: ['panelen.js']
+  };
+  const q = new URLSearchParams(location.search), id = q.get('id');
+  const level = q.get('level') === 'big' ? 'big' : 'small', sound = q.get('sound') !== '0';
+  const PREFIX = 'hlk-spel-';   // samma som spellabbet, så att sparade lägen delas
+  const storage = {
+    get: k => { try{ return localStorage.getItem(PREFIX + id + '-' + k); }catch(e){ return null; } },
+    set: (k, v) => { try{ localStorage.setItem(PREFIX + id + '-' + k, v); }catch(e){} }
+  };
+  const fail = t => { const e = document.getElementById('err'); e.textContent = t; e.hidden = false; };
+  const files = FILES[id];
+  if(!files){ fail('Spelet finns inte.'); return; }
+  const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'spel/' + src; s.onload = ok; s.onerror = no; document.head.append(s); });
+  let running = null;
+  files.reduce((p, f) => p.then(() => load(f)), Promise.resolve()).then(() => {
+    const g = (window.HLK_SPEL || []).find(x => x.id === id);
+    if(!g){ fail('Spelet gick inte att starta.'); return; }
+    running = g.start(document.getElementById('root'), {
+      level, sound, storage,
+      onFinish: () => { try{ parent.postMessage({hlk: 'spel-klart', id}, location.origin); }catch(e){} }
+    });
+  }).catch(() => fail('Spelet gick inte att ladda. Det behövs nät första gången appen öppnas.'));
+  // Stäng spelet ordentligt (ljud, timrar) när ramen töms eller sidan lämnas.
+  addEventListener('pagehide', () => { try{ running && running.stop(); }catch(e){} });
+  addEventListener('message', e => { if(e.origin === location.origin && e.data && e.data.hlk === 'stoppa'){ try{ running && running.stop(); }catch(x){} running = null; } });
+})();
+</script>
+</body>
+</html>
