@@ -17,7 +17,7 @@
 .bg-stage{flex:1 1 58%;min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
 .bg-car{flex:1;min-height:0;border-radius:24px;background:linear-gradient(#cfe9fb,#eef7fd 62%,#c7ccd3 62%,#b4bac2);position:relative;overflow:hidden;display:grid;place-items:center}
 .bg-car svg{width:98%;height:96%}
-.bg-ctrl{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.bg-ctrl{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .bg-tach{width:170px;height:104px}
 .bg-start{width:92px;height:92px;border-radius:50%;border:0;cursor:pointer;font:inherit;font-weight:900;font-size:1rem;color:#fff;background:radial-gradient(#5fd17a,#2f9e44);box-shadow:inset 0 -6px 0 rgba(0,0,0,.2),0 0 0 5px #d9dde3}
 .bg-start.on{background:radial-gradient(#ff7a6e,#c9342a)}
@@ -25,7 +25,7 @@
   box-shadow:inset 0 -8px 0 rgba(0,0,0,.25);transform-origin:50% 100%;transition:transform .08s;touch-action:none}
 .bg-gas.down{transform:perspective(300px) rotateX(18deg)}
 .bg-gas:disabled{opacity:.4;cursor:default}
-.bg-fuelg{width:120px;height:60px;align-self:center}
+.bg-fuelg{width:100px;height:50px;align-self:center}
 .bg-car .bg-world{width:100%;height:100%}
 .bg:not(.driving) .bg-speedo,.bg:not(.driving) .bg-shift{display:none}
 .bg-gear{width:50px;font-size:1.5rem;font-weight:900}
@@ -39,13 +39,12 @@
   opacity:0;transition:opacity .25s;pointer-events:none;text-align:center;max-width:90%;z-index:6}
 .bg-note.on{opacity:1}
 .bg-group{display:flex;gap:4px;padding:4px;border-radius:18px;background:var(--card,#fff);box-shadow:inset 0 0 0 2px var(--line,#C6D1DF)}
-.bg-mini{width:60px;height:60px;border:0;border-radius:14px;cursor:pointer;background:transparent;font:inherit;font-size:1.5rem;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:inherit}
+.bg-mini{width:56px;height:60px;border:0;border-radius:14px;cursor:pointer;background:transparent;font:inherit;font-size:1.5rem;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:inherit}
 .bg-mini span{font-size:.62rem;font-weight:800}
 .bg-mini[aria-pressed="true"]{background:#fff3c4;box-shadow:inset 0 0 0 3px #f5c02e;color:#1D2842}
 .bg-mini.blink[aria-pressed="true"]{background:#e6f8ea;box-shadow:inset 0 0 0 3px #2fb553;color:#1D2842}
-.bg-siren{width:72px;height:72px;border-radius:50%;border:0;cursor:pointer;font-size:2rem;background:var(--card,#fff);box-shadow:inset 0 0 0 3px var(--line,#C6D1DF)}
-.bg-siren[aria-pressed="true"]{box-shadow:inset 0 0 0 4px #2f6fd6;background:#dce9ff;color:#1D2842}
-.bg-horn{width:72px;height:72px;border-radius:50%;border:0;cursor:pointer;font-size:2rem;background:var(--card,#fff);box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);transition:opacity .2s,transform .1s}
+.bg-siren[aria-pressed="true"]{box-shadow:inset 0 0 0 3px #2f6fd6;background:#dce9ff;color:#1D2842}
+.bg-horn{transition:opacity .2s,transform .1s}
 .bg-horn:active{transform:scale(.92)}
 .bg-horn.wait{opacity:.4;cursor:default}
 .bg-panel{flex:1 1 42%;min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
@@ -171,6 +170,43 @@
   const GLARE = [60, 170, 280, 390].map(x => `M${x} 130 L${x + 56} 50 L${x + 80} 50 L${x + 24} 130 Z M${x + 40} 130 L${x + 96} 50 L${x + 106} 50 L${x + 50} 130 Z`).join(' ');
   // Underkanten på karossen, där fjädringen fästs.
   const BOTTOM = {sport: 204, suv: 204, lastbil: 204, buss: 206, formel: 200};
+  // Dimljus: f = främre dimljusets framkant, r = bakre dimljusets bakkant (lågt på stötfångarna).
+  const FOG = {sport: {f: [474, 192], r: [42, 188]}, suv: {f: [466, 176], r: [61, 180]}, lastbil: {f: [470, 182], r: [41, 182]},
+    buss: {f: [472, 194], r: [31, 158]}, formel: {f: [468, 191], r: [52, 172]}};
+  // Symboler för strålkastarna på knapparna, som på en riktig instrumentbräda: grå lampa utan strålar (av),
+  // grön med strålar snett nedåt (halvljus), blå med raka strålar (helljus).
+  const HEAD_ICON = kind => {
+    const col = {av: '#8a929c', halv: '#1f9e3f', hel: '#2f6fd6'}[kind];
+    const rays = kind === 'hel' ? 'M-6 -6 h-8 M-6 -2 h-8 M-6 2 h-8 M-6 6 h-8' : kind === 'halv' ? 'M-6 -6 l-8 3 M-6 -2 l-8 3 M-6 2 l-8 3 M-6 6 l-8 3' : '';
+    return `<svg viewBox="-16 -11 32 22" width="30" height="21" aria-hidden="true"><g stroke="${col}" stroke-width="2.2" fill="none" stroke-linecap="round">
+      <path d="M-2 -8 Q10 -8 10 0 Q10 8 -2 8 Z" fill="${kind === 'av' ? 'none' : col}"/>${rays ? `<path d="${rays}"/>` : ''}</g></svg>`;
+  };
+  // Symboler för blinkers, varningsblinkers och tuta, som på en riktig instrumentbräda och ratt:
+  // gröna pilar, röd dubbeltriangel och signalhorn (tratt med ljudbågar).
+  const DASH_ICON = kind => {
+    const svg = inner => `<svg viewBox="-16 -12 32 24" width="30" height="22" aria-hidden="true">${inner}</svg>`;
+    if(kind === 'left' || kind === 'right') return svg(`<path transform="scale(${kind === 'left' ? -1 : 1} 1)" d="M13 0 L1 -10 L1 -4.5 L-13 -4.5 L-13 4.5 L1 4.5 L1 10 Z" fill="#2fb84a" stroke="#1f8a36" stroke-width="1.5" stroke-linejoin="round"/>`);
+    if(kind === 'hazard') return svg(`<path d="M0 -11 L12.5 10 L-12.5 10 Z" fill="none" stroke="#e8302a" stroke-width="2.6" stroke-linejoin="round"/><path d="M0 -3 L5.5 6 L-5.5 6 Z" fill="none" stroke="#e8302a" stroke-width="2.2" stroke-linejoin="round"/>`);
+    // Signalhorn: ett smalt rör med munstycke som vidgar sig i en svängd tratt (trumpetform), som på ratten.
+    return svg(`<rect x="-15" y="-3.5" width="3" height="7" rx="1" fill="currentColor"/>
+      <path d="M-12 -2 L-3 -2 Q4 -2 11 -10 L11 10 Q4 2 -3 2 L-12 2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+      <ellipse cx="11" cy="0" rx="2" ry="10" fill="currentColor"/>`);
+  };
+  // Symboler för taklampans knapp. Blåljus och varningsljus: ett takljus (kupol på sockel) med strålar, som på
+  // manöverpanelen i en utryckningsbil. Ljusramp: en ramp med fyra lampor och strålar framåt. Taxi: en skylt.
+  const ROOF_ICON = kind => {
+    const svg = inner => `<svg viewBox="-16 -12 32 24" width="30" height="22" aria-hidden="true">${inner}</svg>`;
+    if(kind === 'ramp') return svg(`<rect x="-15" y="-2" width="20" height="6" rx="2" fill="#5b6470"/>${[-12, -6, 0].map(x => `<circle cx="${x}" cy="-5" r="3" fill="#f5c02e" stroke="#222" stroke-width="1"/>`).join('')}
+      <g stroke="#e0a800" stroke-width="2" stroke-linecap="round"><path d="M7 -9 h8 M7 -5 h9 M7 -1 h8"/></g>`);
+    if(kind === 'taxi') return svg(`<rect x="-13" y="-8" width="26" height="14" rx="3" fill="#f5c02e" stroke="#222" stroke-width="1.5"/><text x="0" y="3" font-size="8" font-weight="900" text-anchor="middle" fill="#222" font-family="system-ui,sans-serif">TAXI</text>`);
+    const col = kind === 'amber' ? '#f28a2e' : '#2f6fd6';
+    return svg(`<rect x="-8" y="5" width="16" height="4" rx="1.5" fill="#5b6470"/><path d="M-6 5 Q-6 -5 0 -5 Q6 -5 6 5 Z" fill="${col}" stroke="#222" stroke-width="1"/>
+      <g stroke="${col}" stroke-width="2" stroke-linecap="round"><path d="M0 -8 v-3 M-7 -5 l-3 -3 M7 -5 l3 -3 M-9 1 h-4 M9 1 h4"/></g>`);
+  };
+  // Symboler för dimljus (knappar och varvräknare): främre grön lampa med våg genom strålarna, bakre gul.
+  const FOG_ICON = (front, col) => `<svg viewBox="-16 -11 32 22" width="30" height="21" aria-hidden="true"><g stroke="${col}" stroke-width="2.2" fill="none" stroke-linecap="round">
+    ${front ? `<path d="M-2 -8 Q10 -8 10 0 Q10 8 -2 8 Z" fill="${col}"/><path d="M-6 -6 h-8 M-6 0 h-8 M-6 6 h-8"/><path d="M-10 -9 Q-12 0 -10 9"/>`
+            : `<path d="M2 -8 Q-10 -8 -10 0 Q-10 8 2 8 Z" fill="${col}"/><path d="M6 -6 h8 M6 0 h8 M6 6 h8"/><path d="M10 -9 Q12 0 10 9"/>`}</g></svg>`;
 
   const COLORS = [['Röd', '#e8473c'], ['Orange', '#f28a2e'], ['Gul', '#f5c02e'], ['Grön', '#43b55a'], ['Turkos', '#2bb3b1'], ['Blå', '#2f6fd6'],
     ['Mörkblå', '#1f2f5c'], ['Lila', '#9a5bd6'], ['Rosa', '#ff8fb7'], ['Vit', '#f4f6f8'], ['Silver', '#b9bec6'], ['Svart', '#2a2a2a']];
@@ -340,6 +376,8 @@
     return `<svg class="bg-world" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Körvärld">
       <defs><linearGradient id="wsky" x1="0" x2="0" y1="0" y2="1"><stop class="ws1" offset="0"/><stop class="ws2" offset="1"/></linearGradient>
         <linearGradient id="wbeam" x1="0" x2="1"><stop offset="0" stop-color="#fff6b0" stop-opacity=".85"/><stop offset="1" stop-color="#fff6b0" stop-opacity="0"/></linearGradient>
+        <radialGradient id="wglowblue"><stop offset="0" stop-color="#5a90ff" stop-opacity=".75"/><stop offset=".45" stop-color="#3a7bff" stop-opacity=".3"/><stop offset="1" stop-color="#3a7bff" stop-opacity="0"/></radialGradient>
+        <radialGradient id="wglowamber"><stop offset="0" stop-color="#ffb24a" stop-opacity=".75"/><stop offset=".45" stop-color="#ff9a1a" stop-opacity=".3"/><stop offset="1" stop-color="#ff9a1a" stop-opacity="0"/></radialGradient>
         <radialGradient id="wglow"><stop offset="0" stop-color="#fff3b0" stop-opacity=".9"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient></defs>
       <rect width="800" height="400" fill="url(#wsky)"/>
       <g class="w-sky"></g><path class="w-far"/><g class="w-mid"></g><g class="w-posts"></g>
@@ -354,6 +392,7 @@
   // Hela bilen som SVG. state: {lights}. Höjd lyfter karossen; hjulstorlek ändrar hjulen men de står kvar på marken.
   function carSvg(type, c, state, view){
     const T = TYPES[type], id = 'bgc' + (uid++), mode = state && state.lights || 'av', on = mode !== 'av', high = mode === 'hel';
+    const fogF = !!(state && state.fogF), fogR = !!(state && state.fogR), FG = FOG[type];
     const lift = (c.height || 0) * HEIGHT.step, ws = 1 + (c.wsize || 0) * WSIZE.step;
     const W = WHEELS[c.wheels], grow = W.grow || 0, E = ENGINES[c.engine];
     const ground = T.wheels[0][1] + T.wheels[0][2] + grow;
@@ -384,7 +423,7 @@
         const n = Math.max(3, Math.round(len / 7)), seg = len / n;
         const zig = Array.from({length: n + 1}, (_, i) => `${i ? 'L' : 'M'}${w.x + (i % 2 ? 11 : -11)} ${(top + i * seg).toFixed(1)}`).join(' ');
         return `<rect x="${w.x - 4}" y="${top}" width="8" height="${(len + w.R * 0.6).toFixed(1)}" rx="3" fill="#5b6470"/><path d="${zig}" stroke="#f2a52e" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`; }).join('')}
-      ${beam}
+      ${beam}${fogF ? `<path d="M${FG.f[0] - 4} ${FG.f[1] - lift - 4} L${FG.f[0] + 70} ${FG.f[1] - lift + 4} L${FG.f[0] + 70} ${FG.f[1] - lift + 34} L${FG.f[0] - 4} ${FG.f[1] - lift + 4} Z" fill="url(#${id}b)"/>` : ''}
       <g class="bg-shake"><g transform="translate(0 ${-lift})">
         <g transform="translate(${T.wing[0]} ${T.wing[1]})">${WINGS[c.wing].svg(c.color)}</g>
         ${pipes}${T.under ? T.under(c.color) : ''}
@@ -404,6 +443,8 @@
         <g transform="translate(${T.tail[0]} ${T.tail[1]})">${TAILS[c.tail].svg(on)}${on ? `<ellipse cx="12" cy="0" rx="34" ry="22" fill="url(#${id}t)" style="mix-blend-mode:screen"/>` : ''}
           <rect class="bg-ind" x="0" y="11" width="13" height="7" rx="3" fill="#9a6a20" stroke="#222" stroke-width="1.5"/><ellipse class="bg-indg" cx="6" cy="14" rx="22" ry="15" fill="url(#${id}i)" opacity="0"/>
           <rect class="bg-rev" x="0" y="20" width="13" height="6" rx="2.5" fill="#cfd3d8" stroke="#222" stroke-width="1.5"/><ellipse class="bg-revg" cx="2" cy="23" rx="26" ry="14" fill="url(#${id}h)" opacity="0" style="mix-blend-mode:screen"/></g>
+        <g transform="translate(${FG.f[0]} ${FG.f[1]})"><rect x="-13" y="-4" width="12" height="8" rx="4" fill="#2a2e35" stroke="#222" stroke-width="1.5"/><ellipse cx="-3" cy="0" rx="2.5" ry="3.2" fill="${fogF ? '#fffbe0' : '#b9b39a'}"/>${fogF ? `<ellipse cx="0" cy="0" rx="20" ry="11" fill="url(#${id}h)" style="mix-blend-mode:screen"/>` : ''}</g>
+        <g transform="translate(${FG.r[0]} ${FG.r[1]})"><rect x="0" y="-3.5" width="11" height="7" rx="2.5" fill="${fogR ? '#ff2a1a' : '#7a2420'}" stroke="#222" stroke-width="1.5"/>${fogR ? `<ellipse cx="2" cy="0" rx="24" ry="13" fill="url(#${id}t)" style="mix-blend-mode:screen"/><ellipse cx="2" cy="0" rx="12" ry="7" fill="#ff5a3a" opacity=".55" style="mix-blend-mode:screen"/>` : ''}</g>
         <g clip-path="url(#${id})">${T.noArch ? '' : wh.map(w => `<circle cx="${w.x}" cy="${(w.y + lift).toFixed(1)}" r="${(w.R + 5).toFixed(1)}" fill="#2a2a2a"/>`).join('')}</g>
       </g></g>
       ${wh.map(w => `<g class="bg-wh" data-t="translate(${w.x} ${w.y.toFixed(1)})" transform="translate(${w.x} ${w.y.toFixed(1)})">${W.svg(w.R)}</g>`).join('')}
@@ -555,7 +596,7 @@
     function build(){
       const type = st.type, T = TYPES[type];
       dbg = () => ({v, slope, carX, drive, running, gas, brake});
-      let c = st.cars[type], tab = 'color', running = false, idleT = 0, drive = false, v = 0, carX = 0, wheelA = 0, brake = false, slope = 0, gear = 1, stillT = 0, sel = 'P', lamps = 'av', blinker = 'off', indT = 0, indOn = null, rpm = 0, gas = false, lights = false, raf = 0, last = 0, puffT = 0, blinkT = 0, yayTimer = null;
+      let c = st.cars[type], tab = 'color', running = false, idleT = 0, drive = false, v = 0, carX = 0, wheelA = 0, brake = false, slope = 0, gear = 1, stillT = 0, sel = 'P', lamps = 'av', fogF = false, fogR = false, blinker = 'off', indT = 0, indOn = null, rpm = 0, gas = false, lights = false, raf = 0, last = 0, puffT = 0, blinkT = 0, yayTimer = null;
       el.innerHTML = `
         <div class="bg-top"><button type="button" class="bg-btn" data-a="types">← Byt bil</button><button type="button" class="bg-btn" data-a="garage">← Verkstan</button><div class="bg-title">${T.name}</div>
           <button type="button" class="bg-btn" data-a="night"></button><button type="button" class="bg-btn" data-a="drive">🏁 Kör!</button><button type="button" class="bg-btn done" data-a="done">Klar!</button></div>
@@ -570,21 +611,27 @@
               <button type="button" class="bg-gas bg-brake" aria-label="Broms">BROMS</button>
               <button type="button" class="bg-gas" disabled aria-label="Gaspedal">GAS</button>
               <div class="bg-group" role="group" aria-label="Lampor">
-                <button type="button" class="bg-mini" data-l="av" aria-pressed="true">🌑<span>Av</span></button>
-                <button type="button" class="bg-mini" data-l="halv" aria-pressed="false">💡<span>Halvljus</span></button>
-                <button type="button" class="bg-mini" data-l="hel" aria-pressed="false">🔆<span>Helljus</span></button>
+                <button type="button" class="bg-mini" data-l="av" aria-pressed="true" aria-label="Strålkastare av">${HEAD_ICON('av')}<span>Av</span></button>
+                <button type="button" class="bg-mini" data-l="halv" aria-pressed="false" aria-label="Halvljus">${HEAD_ICON('halv')}<span>Halvljus</span></button>
+                <button type="button" class="bg-mini" data-l="hel" aria-pressed="false" aria-label="Helljus">${HEAD_ICON('hel')}<span>Helljus</span></button>
+              </div>
+              <div class="bg-group" role="group" aria-label="Dimljus">
+                <button type="button" class="bg-mini bg-fog" data-fog="f" aria-pressed="false" aria-label="Främre dimljus">${FOG_ICON(true, '#1f9e3f')}<span>Dimljus fram</span></button>
+                <button type="button" class="bg-mini bg-fog" data-fog="r" aria-pressed="false" aria-label="Bakre dimljus">${FOG_ICON(false, '#e09a10')}<span>Dimljus bak</span></button>
+              </div>
+              <div class="bg-group" role="group" aria-label="Blinkers">
+                <button type="button" class="bg-mini blink" data-b="left" aria-pressed="false" aria-label="Blinka vänster">${DASH_ICON('left')}<span>Vänster</span></button>
+                <button type="button" class="bg-mini blink" data-b="hazard" aria-pressed="false" aria-label="Varningsblinkers">${DASH_ICON('hazard')}<span>Varning</span></button>
+                <button type="button" class="bg-mini blink" data-b="right" aria-pressed="false" aria-label="Blinka höger">${DASH_ICON('right')}<span>Höger</span></button>
+              </div>
+              <div class="bg-group" role="group" aria-label="Tuta och taklampa">
+                <button type="button" class="bg-mini bg-horn" aria-label="Tuta">${DASH_ICON('horn')}<span>Tuta</span></button>
+                <button type="button" class="bg-mini bg-siren" hidden aria-pressed="false" aria-label="Blåljus"></button>
               </div>
               <div class="bg-group bg-fuel" role="group" aria-label="Bränsle">
                 <svg class="bg-fuelg" viewBox="0 0 150 60" aria-hidden="true"></svg>
                 <button type="button" class="bg-mini" data-a="fill"><b class="ic">⛽</b><span>Tanka</span></button>
               </div>
-              <div class="bg-group" role="group" aria-label="Blinkers">
-                <button type="button" class="bg-mini blink" data-b="left" aria-pressed="false" aria-label="Blinka vänster">⬅️<span>Vänster</span></button>
-                <button type="button" class="bg-mini blink" data-b="hazard" aria-pressed="false" aria-label="Varningsblinkers">⚠️<span>Varning</span></button>
-                <button type="button" class="bg-mini blink" data-b="right" aria-pressed="false" aria-label="Blinka höger">➡️<span>Höger</span></button>
-              </div>
-              <button type="button" class="bg-horn" aria-label="Tuta">📯</button>
-              <button type="button" class="bg-siren" hidden aria-pressed="false" aria-label="Blåljus">🚨</button>
             </div>
           </div>
           <div class="bg-panel"><div class="bg-tabs" role="tablist"></div><div class="bg-opts" role="group"></div></div>
@@ -595,6 +642,13 @@
         lamps = b.dataset.l;
         el.querySelectorAll('[data-l]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
         blip(lamps === 'av' ? [700, 520] : lamps === 'hel' ? [880, 1175, 1400] : [880, 1175], 0.07); drawCar();
+      }));
+      // Dimljus fram och bak: var för sig, oberoende av strålkastarna.
+      el.querySelectorAll('[data-fog]').forEach(b => b.addEventListener('click', () => {
+        if(b.dataset.fog === 'f') fogF = !fogF; else fogR = !fogR;
+        const onNow = b.dataset.fog === 'f' ? fogF : fogR;
+        b.setAttribute('aria-pressed', String(onNow));
+        blip(onNow ? [784, 988] : [620, 470], 0.06); drawCar();
       }));
       // Blinkers: vänster, höger eller varningsblinkers. Samma knapp igen stänger av.
       el.querySelectorAll('[data-b]').forEach(b => b.addEventListener('click', () => {
@@ -633,21 +687,24 @@
       function drawCar(){
         if(drive){
           const g = carEl.querySelector('.w-car');
-          g.innerHTML = carSvg(type, c, {lights: lamps}).replace(/^\s*<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+          g.innerHTML = carSvg(type, c, {lights: lamps, fogF, fogR}).replace(/^\s*<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
         }else{
           const old = carEl.querySelector('svg'); if(old) old.remove();
-          carEl.insertAdjacentHTML('afterbegin', carSvg(type, c, {lights: lamps}));
+          carEl.insertAdjacentHTML('afterbegin', carSvg(type, c, {lights: lamps, fogF, fogR}));
         }
         const R = ROOFS[c.roof];
         sirenBtn.hidden = !R.light;
         if(!R.light && lights){ lights = false; sirenOff(); }
         sirenBtn.setAttribute('aria-pressed', String(lights));
-        sirenBtn.textContent = {amber: '🟠', ramp: '🔦', taxi: '🚕'}[R.light] || '🚨';
-        sirenBtn.setAttribute('aria-label', {amber: 'Varningsljus', ramp: 'Ljusramp', taxi: 'Taxiskylt'}[R.light] || 'Blåljus');
+        const roofName = {amber: 'Varningsljus', ramp: 'Ljusramp', taxi: 'Taxiskylt'}[R.light] || 'Blåljus';
+        if(R.light) sirenBtn.innerHTML = ROOF_ICON(R.light) + `<span>${roofName}</span>`;
+        sirenBtn.setAttribute('aria-label', roofName);
       }
       // Symbol i varvräknaren för tända lampor, som på en riktig instrumentbräda:
       // grön halvljussymbol med strålar snett nedåt, blå helljussymbol med raka strålar.
-      const lampIcon = () => {
+      const lampIcon = () => (fogF ? `<g transform="translate(66 88) scale(.6)">${FOG_ICON(true, '#1f9e3f').replace(/<\/?svg[^>]*>/g, '')}</g>` : '')
+        + (fogR ? `<g transform="translate(134 88) scale(.6)">${FOG_ICON(false, '#e09a10').replace(/<\/?svg[^>]*>/g, '')}</g>` : '') + headIcon();
+      const headIcon = () => {
         if(lamps === 'hel') return '<g transform="translate(104 64) scale(.85)" stroke="#2f6fd6" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M-2 -8 Q10 -8 10 0 Q10 8 -2 8 Z" fill="#2f6fd6"/><path d="M-6 -6 h-8 M-6 -2 h-8 M-6 2 h-8 M-6 6 h-8"/></g>';
         if(lamps === 'halv') return '<g transform="translate(104 64) scale(.85)" stroke="#1f9e3f" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M-2 -8 Q10 -8 10 0 Q10 8 -2 8 Z" fill="#2fd65a"/><path d="M-6 -6 l-8 3 M-6 -2 l-8 3 M-6 2 l-8 3 M-6 6 l-8 3"/></g>';
         return '';
@@ -1094,6 +1151,35 @@
           const L = lamps === 'hel' ? 420 : 230, sp = lamps === 'hel' ? 75 : 40, b = slope + (lamps === 'hel' ? 0 : 0.12);
           const ex = wx + L * Math.cos(b), ey = wy + L * Math.sin(b);
           beam = `<path d="M${wx.toFixed(1)} ${(wy - 3).toFixed(1)} L${(ex + sp * Math.sin(b)).toFixed(1)} ${(ey - sp * Math.cos(b)).toFixed(1)} L${(ex - sp * Math.sin(b)).toFixed(1)} ${(ey + sp * Math.cos(b)).toFixed(1)} L${wx.toFixed(1)} ${(wy + 3).toFixed(1)} Z" fill="url(#wbeam)" style="mix-blend-mode:screen"/>`;
+        }
+        // Främre dimljus: en kort, bred och låg kägla precis framför bilen. Bakre: rött sken bakom bilen.
+        if(n && (fogF || fogR)){
+          const ca = Math.cos(slope), sa = Math.sin(slope), FG = FOG[type];
+          const pt = (x, y) => { const hx = x - rx, hy = y - G.lift - G.ground; return [xr - camX + s * (hx * ca - hy * sa), yr + s * (hx * sa + hy * ca)]; };
+          if(fogF){
+            const [wx, wy] = pt(FG.f[0], FG.f[1]), L = 170, sp = 34, b2 = slope + 0.2;
+            const ex = wx + L * Math.cos(b2), ey = wy + L * Math.sin(b2);
+            beam += `<path d="M${wx.toFixed(1)} ${(wy - 3).toFixed(1)} L${(ex + sp * Math.sin(b2)).toFixed(1)} ${(ey - sp * Math.cos(b2)).toFixed(1)} L${(ex - sp * Math.sin(b2)).toFixed(1)} ${(ey + sp * Math.cos(b2)).toFixed(1)} L${wx.toFixed(1)} ${(wy + 3).toFixed(1)} Z" fill="url(#wbeam)" style="mix-blend-mode:screen"/>`;
+          }
+          if(fogR){
+            const [wx, wy] = pt(FG.r[0], FG.r[1]);
+            beam += `<ellipse cx="${(wx - 22).toFixed(1)}" cy="${(wy + 6).toFixed(1)}" rx="46" ry="16" fill="#ff3020" opacity=".32" style="mix-blend-mode:screen"/>`;
+          }
+        }
+        // Blåljus och varningsljus på natten: ett sken runt lampan som blinkar i samma takt som lamporna
+        // (blåljuset växlar mellan vänster och höger lampa) och ett färgat skimmer på vägen runt bilen.
+        const rk = ROOFS[c.roof].light;
+        if(n && lights && (rk === 'blue' || rk === 'amber')){
+          const ca = Math.cos(slope), sa = Math.sin(slope);
+          const pt = (x, y) => { const hx = x - rx, hy = y - G.lift - G.ground; return [xr - camX + s * (hx * ca - hy * sa), yr + s * (hx * sa + hy * ca)]; };
+          const phaseA = Math.floor(blinkT * 3) % 2 === 0, col = `url(#wglow${rk})`;
+          const dx = rk === 'blue' ? (phaseA ? -17 : 17) : 0, on = rk === 'blue' || phaseA;
+          if(on){
+            const [gx, gy] = pt(T.roof[0] + dx, T.roof[1] - (rk === 'blue' ? 7 : 14));
+            const [mx, my] = pt((T.wheels[0][0] + T.wheels[1][0]) / 2 + dx * 3, T.wheels[0][1] + T.wheels[0][2]);
+            beam += `<ellipse cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" rx="110" ry="80" fill="${col}" style="mix-blend-mode:screen"/>
+              <ellipse cx="${mx.toFixed(1)}" cy="${(my + 4).toFixed(1)}" rx="220" ry="30" fill="${col}" opacity=".7" style="mix-blend-mode:screen"/>`;
+          }
         }
         // Ljusrampen på taket: en lång, bred kägla framåt och nedåt som lyser upp vägen långt fram.
         if(n && lights && ROOFS[c.roof].light === 'ramp'){
