@@ -45,6 +45,9 @@
 .bg-mini.blink[aria-pressed="true"]{background:#e6f8ea;box-shadow:inset 0 0 0 3px #2fb553;color:#1D2842}
 .bg-siren{width:72px;height:72px;border-radius:50%;border:0;cursor:pointer;font-size:2rem;background:var(--card,#fff);box-shadow:inset 0 0 0 3px var(--line,#C6D1DF)}
 .bg-siren[aria-pressed="true"]{box-shadow:inset 0 0 0 4px #2f6fd6;background:#dce9ff;color:#1D2842}
+.bg-horn{width:72px;height:72px;border-radius:50%;border:0;cursor:pointer;font-size:2rem;background:var(--card,#fff);box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);transition:opacity .2s,transform .1s}
+.bg-horn:active{transform:scale(.92)}
+.bg-horn.wait{opacity:.4;cursor:default}
 .bg-panel{flex:1 1 42%;min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
 .bg-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .bg-tab{border:0;background:var(--card,#fff);color:inherit;font:inherit;font-weight:700;border-radius:14px;padding:5px 9px;cursor:pointer;box-shadow:inset 0 0 0 3px var(--line,#C6D1DF);font-size:.9rem;display:flex;align-items:center;gap:4px}
@@ -76,54 +79,98 @@
 .bg-yay.on{display:flex}
 .bg-yay .big{font-size:clamp(2rem,6vmin,3.4rem);font-weight:800;line-height:1;text-shadow:0 0 14px #fff,0 0 4px #fff}
 .bg-car.flash::after{content:"";position:absolute;inset:0;background:#fff;animation:bg-flash .5s ease-out forwards}
-.bg-lit .rl{fill:#fffef0}.bg-lit .rg{opacity:.85}.bg-lit .ts{fill:#ffe45c}
+.bg-lit .rl{fill:#fffef0}.bg-lit .rg{opacity:.85}.bg-lit .rb{opacity:.35}.bg-lit .ts{fill:#ffe45c}
+.driving .bg-lit .rb{opacity:0}
 .bg-blink-a .la{opacity:1}.bg-blink-a .lb{opacity:.25}.bg-blink-b .la{opacity:.25}.bg-blink-b .lb{opacity:1}
 @keyframes bg-flash{from{opacity:.9}to{opacity:0}}
 @media (prefers-reduced-motion: reduce){ .bg-car.flash::after{animation:none;opacity:0} }`;
 
   // ---------- Biltyperna, sedda från sidan, fronten åt höger (500 × 260) ----------
   const TYPES = {
-    // Sportbilen har formen av en Porsche 911: rundad nos, framskärmar som buktar upp vid lamporna
-    // och ett tak som sluttar i en jämn båge ned till en rundad bakdel.
-    sport: {name: 'Sportbil',
-      body: 'M44 198 Q36 186 44 170 Q56 146 92 124 Q150 88 226 84 Q284 82 322 104 Q344 118 364 140 Q392 132 420 136 Q446 138 462 152 Q476 166 474 186 Q474 202 462 204 L52 204 Q44 204 44 198 Z',
-      win: 'M150 130 Q170 101 214 94 Q280 88 318 112 L340 132 Z', winLine: 'M258 91 L252 132', door: 'M246 136 L250 196 M346 142 L344 194',
-      wheels: [[128, 204, 33], [398, 204, 32]], head: [462, 158], tail: [48, 176], roof: [232, 85], wing: [74, 140], hood: [400, 137],
-      exhaust: [48, 198], mid: 172, band: 186, doorX: 296, front: 474},
-    // SUV:n har formen av en Rivian R1S: låg kort front, lång nästan platt taklinje och en nästan lodrät, rundad bakdel.
-    suv: {name: 'SUV',
-      body: 'M38 204 L38 116 Q38 72 72 70 L330 66 Q350 66 362 76 L396 116 Q404 122 418 124 L456 130 Q472 134 474 150 L474 194 Q474 204 464 204 Z',
-      // Tre sidorutor med fyra stolpar: D-stolpen baktill, C mellan bakre sidorutan och bakdörren,
-      // B mellan dörrarna och A längs vindrutan. Två dörrar syns, var och en med handtag.
-      win: 'M86 82 L154 80 L154 114 L78 114 Q76 92 86 82 Z M164 80 L250 79 L250 114 L164 114 Z M260 79 L330 78 Q344 78 354 88 L378 114 L260 114 Z',
-      winLine: '', door: 'M255 79 L255 198 M159 80 L159 168 M374 116 L368 164 M290 130 h22 M196 130 h22',
-      wheels: [[112, 204, 38], [398, 204, 38]], head: [466, 142], tail: [42, 132], roof: [220, 68], wing: [74, 70], hood: [434, 124],
-      exhaust: [42, 198], mid: 152, band: 178, doorX: 300, front: 474},
-    lastbil: {name: 'Pickup',
+    // Sportbilen: en egen kilformad superbil med mittmotor. Vass låg nos, rak motorhuv som stiger mot en mycket
+    // lutande vindruta, kort låg kupé framför bakaxeln, lång motorkåpa som sluttar ned mot en rak bakdel.
+    // Större hjul bak än fram, stort luftintag framför bakhjulet, skarp kilformad sidolinje, ventiler på
+    // motorkåpan och svart tröskel.
+    sport: {name: 'Sportbil', shade: true, glass: true,
+      body: 'M50 204 L44 198 Q40 192 41 182 L43 158 Q45 150 56 148 L150 136 Q178 128 198 122 L268 118 Q282 118 292 124 L344 156 L470 182 Q480 186 479 192 L477 198 Q474 204 462 204 Z',
+      win: 'M214 126 L266 122 Q279 122 288 128 L330 155 L220 153 Q214 140 214 126 Z', winLine: '', door: 'M210 124 L216 198 M336 158 L332 198',
+      detail: () => `<path d="M468 182 Q330 166 150 162" stroke="#fff" stroke-width="3" fill="none" opacity=".4" stroke-linecap="round"/>
+        <path d="M466 192 Q330 178 150 174" stroke="#000" stroke-width="2.5" fill="none" opacity=".2" stroke-linecap="round"/>
+        <path d="M206 166 L170 164 Q160 176 162 194 L204 194 Z" fill="#1d1d1d" stroke="#222" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M203 171 L168 170 M203 178 L164 177 M203 185 L163 185 M203 191 L163 191" stroke="#5b6470" stroke-width="2"/>
+        <path d="M84 148 L170 134 M90 154 L176 140" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+        <path d="M150 198 L380 198 L380 204 L150 204 Z" fill="#1d1d1d"/>
+        <rect x="294" y="162" width="16" height="5" rx="2.5" fill="#1d1d1d"/>`,
+      mirror: [318, 148],
+      wheels: [[122, 204, 40], [398, 204, 35]], head: [456, 181], tail: [44, 160], roof: [232, 120], wing: [66, 148], hood: [404, 168],
+      exhaust: [46, 198], mid: 174, band: 192, doorX: 270, front: 479},
+    // SUV:n: en egen modern SUV, upprätt och robust med korta överhäng, lutande vindruta, nästan plant tak och
+    // en rak bakdel med lite lutning. Mörka skärmbreddare runt hjulen och längs tröskeln, svarta stolpar mellan
+    // rutorna (taket ser ut att sväva), dörrhandtag, backspegel och en skulpterad sidolinje.
+    suv: {name: 'SUV', shade: true, glass: true,
+      body: 'M62 204 L60 150 Q60 126 66 112 L76 80 Q80 66 96 66 L306 62 Q322 62 332 70 L362 106 Q372 110 386 111 L446 116 Q464 120 466 138 L468 190 Q468 204 456 204 Z',
+      win: 'M90 80 L150 79 L150 112 L82 112 Q82 92 90 80 Z M160 79 L232 78 L232 112 L160 112 Z M242 78 L306 76 Q318 76 326 85 L350 112 L242 112 Z',
+      winLine: '', door: 'M237 77 L237 196 M155 79 L155 166 M352 116 L348 168',
+      detail: c => `<path d="M76 122 Q260 118 448 124" stroke="#fff" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>
+        <path d="M76 132 Q260 128 448 134" stroke="#000" stroke-width="2.5" fill="none" opacity=".15" stroke-linecap="round"/>
+        <rect x="149" y="77" width="12" height="37" fill="#1d1d1d"/><rect x="231" y="76" width="12" height="38" fill="#1d1d1d"/>
+        <path d="M82 204 A54 54 0 0 1 190 204" stroke="#2a2e35" stroke-width="12" fill="none"/><path d="M338 204 A54 54 0 0 1 446 204" stroke="#2a2e35" stroke-width="12" fill="none"/>
+        <path d="M190 192 L338 192 L338 204 L190 204 Z" fill="#2a2e35"/><path d="M440 188 L468 184 L468 200 L444 204 Z" fill="#b9c0c9" stroke="#222" stroke-width="1.5"/>
+        <rect x="178" y="126" width="20" height="5" rx="2.5" fill="#d9dde3" stroke="#222" stroke-width="1.2"/><rect x="262" y="126" width="20" height="5" rx="2.5" fill="#d9dde3" stroke="#222" stroke-width="1.2"/>`,
+      mirror: [344, 104],
+      wheels: [[136, 204, 40], [392, 204, 40]], head: [458, 128], tail: [62, 122], roof: [200, 62], wing: [96, 66], hood: [416, 113],
+      exhaust: [62, 198], mid: 150, band: 176, doorX: 290, front: 468},
+    lastbil: {name: 'Pickup', shade: true, glass: true,
+      detail: c => `<path d="M44 140 L236 140 M244 138 Q350 134 466 142" stroke="#fff" stroke-width="3" fill="none" opacity=".3" stroke-linecap="round"/>
+        <path d="M44 134 L236 134" stroke="#222" stroke-width="2" opacity=".35"/><path d="M72 140 L72 196" stroke="#222" stroke-width="2" opacity=".3"/>
+        <path d="M66 204 A50 50 0 0 1 166 204 M346 204 A50 50 0 0 1 446 204" stroke="#2a2e35" stroke-width="10" fill="none"/>
+        <rect x="282" y="140" width="20" height="5" rx="2.5" fill="#d9dde3" stroke="#222" stroke-width="1.2"/>
+        <path d="M352 118 Q364 106 380 110 L380 122 Q364 126 352 118 Z" fill="${c}" stroke="#222" stroke-width="2" stroke-linejoin="round"/>`,
       body: 'M40 204 L40 130 L238 130 L238 88 Q242 74 258 74 L330 74 Q342 74 350 84 L382 124 L450 130 Q470 134 472 154 L472 204 Z',
       win: 'M254 86 L334 86 L362 124 L254 124 Z', winLine: '', door: 'M240 128 L240 196 M330 126 L330 196',
       wheels: [[116, 204, 38], [396, 204, 38]], head: [466, 146], tail: [44, 144], roof: [292, 74], wing: [64, 130], hood: [420, 130],
       exhaust: [44, 198], mid: 158, band: 180, doorX: 290, front: 472},
-    buss: {name: 'Buss',
+    buss: {name: 'Buss', shade: true, glass: true,
+      detail: () => `<path d="M30 128 L474 128" stroke="#fff" stroke-width="3" opacity=".3"/><path d="M30 186 L474 186" stroke="#d9dde3" stroke-width="3"/><path d="M30 189 L474 189" stroke="#222" stroke-width="1" opacity=".4"/>`,
       body: 'M30 206 L30 70 Q30 56 44 56 L440 56 Q458 56 463 72 L474 122 L474 206 Z',
       win: 'M52 72 L96 72 L96 118 L52 118 Z M104 72 L148 72 L148 118 L104 118 Z M156 72 L200 72 L200 118 L156 118 Z M208 72 L252 72 L252 118 L208 118 Z M260 72 L304 72 L304 118 L260 118 Z M312 72 L356 72 L356 118 L312 118 Z M432 70 L455 72 L466 118 L432 118 Z',
       winLine: '', door: 'M392 72 L392 200 L424 200 L424 72 Z M408 72 L408 200',
       wheels: [[108, 206, 34], [384, 206, 34]], head: [466, 172], tail: [36, 172], roof: [240, 56], wing: [48, 58], hood: [452, 140],
       exhaust: [36, 200], mid: 150, band: 176, doorX: 230, front: 474},
-    // Formelbil: låg lång kaross med spetsig nos, sidolåda, luftintag ovanför föraren, öppen cockpit
-    // med förare i hjälm och skyddsbåge (halo), frontvinge och fritt stående hjul.
-    formel: {name: 'Formelbil', noArch: true,
-      body: 'M40 190 L40 170 Q42 164 52 163 L140 160 Q150 120 176 108 Q196 103 206 116 L216 128 L252 132 L300 140 Q332 146 360 160 L466 172 Q480 176 476 185 L466 191 L300 194 L150 196 L48 194 Q40 194 40 190 Z',
-      win: 'M262 131 L276 120 L282 134 Z', winLine: '', door: 'M150 168 Q200 164 250 170 L300 176',
-      extra: '<path d="M206 126 Q224 98 260 128" stroke="#2a2a2a" stroke-width="5" fill="none" stroke-linecap="round"/>'
-        + '<circle cx="232" cy="118" r="14" fill="#f5c02e" stroke="#222" stroke-width="2.5"/><path d="M234 112 Q246 112 246 120 L236 122 Z" fill="#2a2a2a"/>'
-        + '<path d="M232 104 Q236 110 222 110" stroke="#e8473c" stroke-width="3" fill="none"/>'
-        + '<path d="M416 196 L484 186 L484 196 L420 202 Z" fill="#2a2a2a" stroke="#222" stroke-width="1.5"/><rect x="476" y="176" width="8" height="26" rx="2" fill="#2a2a2a"/>',
-      wheels: [[104, 202, 38], [392, 206, 34]], head: [472, 178], tail: [42, 172], roof: [176, 108], wing: [56, 164], hood: [330, 148],
-      exhaust: [40, 184], mid: 172, band: 184, doorX: 300, front: 478}
+    // Formelbil: en egen modern formelbil. Lång låg kaross med spetsig nos som sluttar ned mot frontvingen,
+    // sidolådor med luftintag, motorkåpa som stiger mot ett luftintag ovanför förarens huvud, bakvinge över
+    // bakhjulet. Föraren sitter i cockpit (hjälmen ritas under karossen så att den sticker upp ur öppningen)
+    // med skyddsbåge (halo). Länkarmar, bottenplatta och frontvinge med ändplatta i bilens färg.
+    formel: {name: 'Formelbil', noArch: true, shade: true,
+      body: 'M58 198 L58 178 Q60 168 74 166 L148 158 Q176 142 194 122 Q202 110 216 108 L224 108 L228 126 L244 136 Q266 138 292 142 Q356 150 418 168 Q458 180 472 188 Q478 196 466 198 L360 200 L324 204 L120 204 Q96 204 86 200 Z',
+      win: 'M284 132 L294 124 L297 141 Z', winLine: '', door: 'M302 160 Q250 150 176 166',
+      under: c => `<g stroke="#3a3f47" stroke-width="3.5" stroke-linecap="round"><path d="M142 182 L100 196 M142 198 L100 206"/><path d="M356 188 L400 200 M356 200 L400 210"/></g>
+        <path d="M110 204 L384 204 L380 212 L114 212 Z" fill="#2a2a2a"/>
+        <circle cx="252" cy="126" r="14" fill="#f5c02e" stroke="#222" stroke-width="2.5"/><path d="M252 118 Q268 117 266 128 L254 130 Z" fill="#2a2a2a"/><path d="M240 120 Q252 110 264 116" stroke="${c === '#e8473c' ? '#2f6fd6' : '#e8473c'}" stroke-width="3" fill="none"/>`,
+      detail: () => `<path d="M80 164 Q150 152 190 126" stroke="#fff" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>
+        <path d="M296 146 Q380 156 460 182" stroke="#fff" stroke-width="2.5" fill="none" opacity=".3" stroke-linecap="round"/>
+        <path d="M300 160 Q312 160 312 172 L312 186 Q312 196 300 196 Z" fill="#1d1d1d"/>
+        <rect x="206" y="110" width="16" height="13" rx="5" fill="#1d1d1d"/>`,
+      extra: c => `<path d="M228 124 Q254 108 282 124 L292 142" stroke="#2a2a2a" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M398 208 L486 200 L486 210 L402 216 Z" fill="#2a2a2a" stroke="#222" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M408 202 L484 195 L484 200 L412 207 Z" fill="${c}" stroke="#222" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="481" y="186" width="9" height="30" rx="2" fill="${c}" stroke="#222" stroke-width="2"/>`,
+      wheels: [[100, 200, 40], [400, 204, 36]], head: [460, 186], tail: [48, 182], roof: [220, 108], wing: [64, 168], hood: [334, 147],
+      exhaust: [58, 192], mid: 172, band: 186, doorX: 336, front: 488}
   };
+  // Tutor per bil: delar [start, längd] i sekunder, toner, vågform, filter och styrka.
+  const HORN_GAP = 2000;
+  const HORNS = {
+    sport:   {parts: [[0, 0.13], [0.19, 0.17]], f: [523, 659], wave: 'sawtooth', cut: 2600, vol: 0.2},          // snabbt, ljust "tu-tut!"
+    suv:     {parts: [[0, 0.45]], f: [349, 440], wave: 'square', cut: 1800, vol: 0.18},                           // klassisk tvåtonstuta
+    lastbil: {parts: [[0, 0.22], [0.3, 0.3]], f: [247, 311], wave: 'square', cut: 1400, vol: 0.22},              // djupt "honk-honk"
+    buss:    {parts: [[0, 0.85]], f: [147, 185, 220], wave: 'sawtooth', cut: 1100, vol: 0.2},                     // lång djup lufttuta
+    formel:  {parts: [[0, 0.1], [0.15, 0.1]], f: [880], glide: 1.33, wave: 'triangle', cut: 5000, vol: 0.22}     // snabbt stigande "pip-pip"
+  };
+  // Reflexer i tonat glas: snedränder över hela bredden, klippta av rutorna.
+  const GLARE = [60, 170, 280, 390].map(x => `M${x} 130 L${x + 56} 50 L${x + 80} 50 L${x + 24} 130 Z M${x + 40} 130 L${x + 96} 50 L${x + 106} 50 L${x + 50} 130 Z`).join(' ');
   // Underkanten på karossen, där fjädringen fästs.
-  const BOTTOM = {sport: 204, suv: 204, lastbil: 204, buss: 206, formel: 194};
+  const BOTTOM = {sport: 204, suv: 204, lastbil: 204, buss: 206, formel: 200};
 
   const COLORS = [['Röd', '#e8473c'], ['Orange', '#f28a2e'], ['Gul', '#f5c02e'], ['Grön', '#43b55a'], ['Turkos', '#2bb3b1'], ['Blå', '#2f6fd6'],
     ['Mörkblå', '#1f2f5c'], ['Lila', '#9a5bd6'], ['Rosa', '#ff8fb7'], ['Vit', '#f4f6f8'], ['Silver', '#b9bec6'], ['Svart', '#2a2a2a']];
@@ -147,7 +194,13 @@
     inget:   {name: 'Inget', svg: () => ''},
     blaljus: {name: 'Blåljus', light: 'blue', svg: () => `<rect x="-36" y="-14" width="72" height="14" rx="5" fill="#d9dde3" stroke="#222" stroke-width="2"/><rect class="la" x="-32" y="-12" width="30" height="10" rx="3" fill="#2f6fd6"/><rect class="lb" x="2" y="-12" width="30" height="10" rx="3" fill="#2f6fd6"/>`},
     gult:    {name: 'Varningsljus', light: 'amber', svg: () => `<rect x="-14" y="-5" width="28" height="5" fill="#555"/><path class="la" d="M-12 -5 Q-12 -24 0 -24 Q12 -24 12 -5 Z" fill="#f28a2e" stroke="#222" stroke-width="2"/>`},
-    ramp:    {name: 'Ljusramp', light: 'ramp', svg: () => `${[-33, -11, 11, 33].map(x => `<ellipse class="rg" cx="${x + 14}" cy="-16" rx="30" ry="16" fill="#fff6b0" opacity="0"/>`).join('')}<rect x="-44" y="-12" width="88" height="8" rx="3" fill="#222"/>${[-33, -11, 11, 33].map(x => `<circle class="rl" cx="${x}" cy="-16" r="8" fill="#d8d4c2" stroke="#222" stroke-width="2"/>`).join('')}`},
+    // Ljusrampen sedd från sidan: fyra lamphus på en takbåge med glaset framåt (åt höger). Tänd: glaset lyser,
+    // ett sken framför varje lampa och en ljuskägla framåt och nedåt.
+    ramp:    {name: 'Ljusramp', light: 'ramp', svg: () => `<path class="rb" d="M46 -22 L300 18 L300 120 L46 -10 Z" fill="#fff6b0" opacity="0" style="mix-blend-mode:screen"/>
+      ${[-33, -11, 11, 33].map(x => `<ellipse class="rg" cx="${x + 16}" cy="-16" rx="18" ry="10" fill="#fff6b0" opacity="0"/>`).join('')}
+      <path d="M-40 -2 L-40 -8 L44 -8 L44 -2" stroke="#222" stroke-width="3" fill="none"/><rect x="-44" y="-10" width="92" height="5" rx="2.5" fill="#222"/>
+      ${[-33, -11, 11, 33].map(x => `<rect x="${x - 9}" y="-25" width="15" height="18" rx="4" fill="#2a2e35" stroke="#222" stroke-width="1.5"/><rect x="${x - 7}" y="-23" width="9" height="3" rx="1.5" fill="#5b6470"/>
+        <ellipse class="rl" cx="${x + 6}" cy="-16" rx="4" ry="8.5" fill="#d8d4c2" stroke="#222" stroke-width="2"/>`).join('')}`},
     box:     {name: 'Takbox', svg: () => `<rect x="-64" y="-22" width="128" height="22" rx="10" fill="#3a3f47"/><rect x="-56" y="-18" width="112" height="4" rx="2" fill="#5b6470"/>`},
     taxi:    {name: 'Taxiskylt', light: 'taxi', svg: () => `<ellipse class="rg" cx="0" cy="-9" rx="40" ry="20" fill="#fff3a0" opacity="0"/><rect class="ts" x="-24" y="-18" width="48" height="18" rx="5" fill="#d9a82a" stroke="#222" stroke-width="2"/><text x="0" y="-9" text-anchor="middle" dominant-baseline="central" font-family="system-ui,sans-serif" font-weight="900" font-size="11" fill="#222">TAXI</text>`}
   };
@@ -316,11 +369,13 @@
       ? `<path d="M${T.head[0] - 6} ${hy - 10} L560 ${hy - 48} L560 ${hy + 56} L${T.head[0] - 6} ${hy + 10} Z" fill="url(#${id}b)"/><path d="M${T.head[0] - 6} ${hy - 6} L560 ${hy - 24} L560 ${hy + 30} L${T.head[0] - 6} ${hy + 6} Z" fill="url(#${id}b)"/>`
       : `<path d="M${T.head[0] - 6} ${hy - 4} L520 ${hy + 2} L520 ${hy + 46} L${T.head[0] - 6} ${hy + 8} Z" fill="url(#${id}b)"/>`;
     return `<svg viewBox="${view || '0 -30 500 290'}" aria-hidden="true">
-      <defs><clipPath id="${id}"><path d="${T.body}"/></clipPath>
+      <defs><clipPath id="${id}"><path d="${T.body}"/></clipPath><clipPath id="${id}w"><path d="${T.win}"/></clipPath>
         <linearGradient id="${id}b" x1="0" x2="1"><stop offset="0" stop-color="#fff6b0" stop-opacity=".95"/><stop offset="1" stop-color="#fff6b0" stop-opacity="0"/></linearGradient>
         <radialGradient id="${id}h"><stop offset="0" stop-color="#fffbe0" stop-opacity="1"/><stop offset=".45" stop-color="#fff3a0" stop-opacity=".7"/><stop offset="1" stop-color="#fff3a0" stop-opacity="0"/></radialGradient>
         <radialGradient id="${id}t"><stop offset="0" stop-color="#ff5a4a" stop-opacity=".9"/><stop offset=".5" stop-color="#ff3020" stop-opacity=".45"/><stop offset="1" stop-color="#ff3020" stop-opacity="0"/></radialGradient>
-        <radialGradient id="${id}i"><stop offset="0" stop-color="#ffc040" stop-opacity="1"/><stop offset=".5" stop-color="#ff9a10" stop-opacity=".55"/><stop offset="1" stop-color="#ff9a10" stop-opacity="0"/></radialGradient></defs>
+        <radialGradient id="${id}i"><stop offset="0" stop-color="#ffc040" stop-opacity="1"/><stop offset=".5" stop-color="#ff9a10" stop-opacity=".55"/><stop offset="1" stop-color="#ff9a10" stop-opacity="0"/></radialGradient>
+        <linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset=".3" stop-color="#fff" stop-opacity=".06"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset=".72" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+        <linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5d7a96"/><stop offset=".45" stop-color="#2c3d52"/><stop offset="1" stop-color="#1b2633"/></linearGradient></defs>
       <ellipse cx="260" cy="${ground - 2}" rx="230" ry="9" fill="rgba(0,0,0,.18)"/>
       ${wh.map(w => {
         // Fjädring: syns bara i glappet mellan karossens underkant och hjulets ovankant.
@@ -332,12 +387,14 @@
       ${beam}
       <g class="bg-shake"><g transform="translate(0 ${-lift})">
         <g transform="translate(${T.wing[0]} ${T.wing[1]})">${WINGS[c.wing].svg(c.color)}</g>
-        ${pipes}
+        ${pipes}${T.under ? T.under(c.color) : ''}
         <path d="${T.body}" fill="${c.color}" stroke="#222" stroke-width="4" stroke-linejoin="round"/>
-        <g clip-path="url(#${id})">${LIVERIES[c.livery].svg(T)}</g>
+        <g clip-path="url(#${id})">${LIVERIES[c.livery].svg(T)}${T.shade ? `<rect x="0" y="40" width="500" height="170" fill="url(#${id}s)"/>` : ''}${T.detail ? T.detail(c.color) : ''}</g>
         <path d="${T.body}" fill="none" stroke="#222" stroke-width="4" stroke-linejoin="round"/>
-        <path d="${T.win}" fill="#bfe6ff" stroke="#222" stroke-width="3" stroke-linejoin="round"/>
-        ${T.winLine ? `<path d="${T.winLine}" stroke="#222" stroke-width="3"/>` : ''}${T.extra || ''}
+        ${T.glass ? `<path d="${T.win}" fill="url(#${id}g)" stroke="#222" stroke-width="6" stroke-linejoin="round"/><path d="${T.win}" fill="none" stroke="#d9dde3" stroke-width="2.5" stroke-linejoin="round"/>
+          <g clip-path="url(#${id}w)"><path d="${GLARE}" fill="#fff" opacity=".18"/></g>`
+          : `<path d="${T.win}" fill="#bfe6ff" stroke="#222" stroke-width="3" stroke-linejoin="round"/>`}
+        ${T.winLine ? `<path d="${T.winLine}" stroke="#222" stroke-width="${T.glass ? 7 : 3}"/>` : ''}${typeof T.extra === 'function' ? T.extra(c.color) : (T.extra || '')}${T.mirror ? `<path transform="translate(${T.mirror[0]} ${T.mirror[1]})" d="M-4 0 Q8 -12 24 -8 L24 4 Q8 8 -4 0 Z" fill="${c.color}" stroke="#222" stroke-width="2" stroke-linejoin="round"/>` : ''}
         <path d="${T.door}" stroke="#222" stroke-width="2.5" fill="none" opacity=".7"/>
         <g transform="translate(${T.hood[0]} ${T.hood[1]})">${HOODS[c.hood].svg(c.color)}</g>
         <g transform="translate(${T.roof[0]} ${T.roof[1]})" class="bg-roof">${ROOFS[c.roof].svg()}</g>
@@ -494,8 +551,10 @@
       {id: 'wing', name: 'Vinge', icon: '🪽', set: WINGS}, {id: 'hood', name: 'Huv', icon: '🔧', set: HOODS}, {id: 'head', name: 'Framlampor', icon: '💡', set: HEADS},
       {id: 'tail', name: 'Baklampor', icon: '🔴', set: TAILS}, {id: 'wheels', name: 'Fälgar', icon: '🛞', set: WHEELS}, {id: 'engine', name: 'Motor', icon: '⚙️', set: ENGINES}, {id: 'chassi', name: 'Höjd och hjul', icon: '🔩'}
     ];
+    let dbg = null;   // bara för test: läser fart och lutning i körläget
     function build(){
       const type = st.type, T = TYPES[type];
+      dbg = () => ({v, slope, carX, drive, running, gas, brake});
       let c = st.cars[type], tab = 'color', running = false, idleT = 0, drive = false, v = 0, carX = 0, wheelA = 0, brake = false, slope = 0, gear = 1, stillT = 0, sel = 'P', lamps = 'av', blinker = 'off', indT = 0, indOn = null, rpm = 0, gas = false, lights = false, raf = 0, last = 0, puffT = 0, blinkT = 0, yayTimer = null;
       el.innerHTML = `
         <div class="bg-top"><button type="button" class="bg-btn" data-a="types">← Byt bil</button><button type="button" class="bg-btn" data-a="garage">← Verkstan</button><div class="bg-title">${T.name}</div>
@@ -524,6 +583,7 @@
                 <button type="button" class="bg-mini blink" data-b="hazard" aria-pressed="false" aria-label="Varningsblinkers">⚠️<span>Varning</span></button>
                 <button type="button" class="bg-mini blink" data-b="right" aria-pressed="false" aria-label="Blinka höger">➡️<span>Höger</span></button>
               </div>
+              <button type="button" class="bg-horn" aria-label="Tuta">📯</button>
               <button type="button" class="bg-siren" hidden aria-pressed="false" aria-label="Blåljus">🚨</button>
             </div>
           </div>
@@ -544,6 +604,31 @@
       }));
       const sirenBtn = el.querySelector('.bg-siren'), tabsEl = el.querySelector('.bg-tabs'), optsEl = el.querySelector('.bg-opts'), main = el.querySelector('.bg-main'), yay = el.querySelector('.bg-yay');
       const E = () => ENGINES[c.engine];
+
+      // Tutan: varje bil har sin egen. Högst ett tut varannan sekund, så att det inte blir tut-spam i bilen.
+      const hornBtn = el.querySelector('.bg-horn');
+      let lastHorn = -1e9, hornTimer = null;
+      function horn(){
+        const now = performance.now();
+        if(now - lastHorn < HORN_GAP) return;
+        lastHorn = now;
+        hornBtn.classList.add('wait'); hornBtn.setAttribute('aria-disabled', 'true');
+        clearTimeout(hornTimer); hornTimer = setTimeout(() => { hornBtn.classList.remove('wait'); hornBtn.removeAttribute('aria-disabled'); }, HORN_GAP);
+        const a = ctx(); if(!a) return;
+        const H = HORNS[type], filt = a.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = H.cut; filt.connect(master);
+        H.parts.forEach(([at, dur]) => {
+          const t0 = a.currentTime + at, g = a.createGain();
+          g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(H.vol, t0 + 0.02);
+          g.gain.setValueAtTime(H.vol, t0 + dur - 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+          g.connect(filt);
+          H.f.forEach(fr => {
+            const o = a.createOscillator(); o.type = H.wave;
+            o.frequency.setValueAtTime(fr, t0); if(H.glide) o.frequency.linearRampToValueAtTime(fr * H.glide, t0 + dur);
+            o.connect(g); o.start(t0); o.stop(t0 + dur + 0.05);
+          });
+        });
+      }
+      hornBtn.addEventListener('click', horn);
 
       function drawCar(){
         if(drive){
@@ -878,7 +963,7 @@
         if(gas && canGo) a += dp.acc * Math.max(0, 1 - Math.max(0, v) / dp.vmax);
         a -= 0.22 * v;
         if(!gas && Math.abs(v) > 1) a -= Math.sign(v) * 40;          // rullmotstånd: bilen rullar ut
-        if(!(brake && Math.abs(v) < 1)) a -= 380 * Math.sin(slope);
+        if(!(brake && Math.abs(v) < 1)) a += 380 * Math.sin(slope);   // y växer nedåt: nedförsbacke framåt = positiv lutning = rullar framåt
         v += a * dt;
         // Bromsen stannar bilen. Först när bilen stått still med bromsen nere i 0,7 sekunder backar den,
         // och då högst 30 km/h.
@@ -902,7 +987,7 @@
         if(gas && canGo && sel === 'R') a -= 180 * Math.max(0, 1 - Math.max(0, -v) / REV);
         a -= 0.22 * v;
         if(!(gas && (sel === 'D' || sel === 'R')) && Math.abs(v) > 1) a -= Math.sign(v) * 40;
-        if(!(brake && Math.abs(v) < 1)) a -= 380 * Math.sin(slope);
+        if(!(brake && Math.abs(v) < 1)) a += 380 * Math.sin(slope);   // y växer nedåt: nedförsbacke framåt = positiv lutning = rullar framåt
         v += a * dt;
         if(brake){ const d = 650 * dt; v = Math.abs(v) <= d ? 0 : v - Math.sign(v) * d; }
         if(!gas && !brake && Math.abs(v) < 8 && Math.abs(slope) < 0.04) v = 0;
@@ -1010,6 +1095,14 @@
           const ex = wx + L * Math.cos(b), ey = wy + L * Math.sin(b);
           beam = `<path d="M${wx.toFixed(1)} ${(wy - 3).toFixed(1)} L${(ex + sp * Math.sin(b)).toFixed(1)} ${(ey - sp * Math.cos(b)).toFixed(1)} L${(ex - sp * Math.sin(b)).toFixed(1)} ${(ey + sp * Math.cos(b)).toFixed(1)} L${wx.toFixed(1)} ${(wy + 3).toFixed(1)} Z" fill="url(#wbeam)" style="mix-blend-mode:screen"/>`;
         }
+        // Ljusrampen på taket: en lång, bred kägla framåt och nedåt som lyser upp vägen långt fram.
+        if(n && lights && ROOFS[c.roof].light === 'ramp'){
+          const ca = Math.cos(slope), sa = Math.sin(slope), hx = T.roof[0] + 40 - rx, hy = T.roof[1] - 16 - G.lift - G.ground;
+          const wx = xr - camX + s * (hx * ca - hy * sa), wy = yr + s * (hx * sa + hy * ca);
+          const L = 520, sp = 95, b = slope + 0.17;
+          const ex = wx + L * Math.cos(b), ey = wy + L * Math.sin(b);
+          beam += `<path d="M${wx.toFixed(1)} ${(wy - 6).toFixed(1)} L${(ex + sp * Math.sin(b)).toFixed(1)} ${(ey - sp * Math.cos(b)).toFixed(1)} L${(ex - sp * Math.sin(b)).toFixed(1)} ${(ey + sp * Math.cos(b)).toFixed(1)} L${wx.toFixed(1)} ${(wy + 6).toFixed(1)} Z" fill="url(#wbeam)" style="mix-blend-mode:screen"/>`;
+        }
         w.querySelector('.w-beam').innerHTML = beam;
         w.querySelector('.w-glow').innerHTML = glow;
         drawSpeedo();
@@ -1039,6 +1132,7 @@
     if(st.type && TYPES[st.type]) build(); else showTypes();
 
     return {
+      _drive: () => dbg ? dbg() : null,   // bara för test
       stop(){
         if(cleanup) cleanup();
         try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
