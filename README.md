@@ -398,7 +398,7 @@ De viktigaste begränsningarna i nuvarande version, med vad de innebär i prakti
 - **Ett matstopp i taget.** Ett nytt kan läggas till först när det förra är avklarat eller överhoppat.
 - **Sökningen på startsidan gynnar Stockholmsområdet.** Platser långt bort kan behöva orten i sökningen. Under resan gynnar sökningen i stället bilens position.
 - **Den påhittade resan** följer ingen riktig väg och ser därför konstig ut på kartan.
-- **Spel och andra planerade funktioner** är inte inkopplade i appen ännu. Spelen testas i spellabbet.
+- **Spelen** fungerar utan nät först när appen har öppnats en gång med nät, så att service workern har sparat dem i enheten. Efter en ny version behöver appen öppnas med nät igen.
 
 ## Spel under resan
 
@@ -477,7 +477,7 @@ Hela appen och alla 31 spel gicks igenom efter buggar och möjliga effektiviseri
 
 ## Spelbiblioteket och spellabbet
 
-Spelen byggs som ett bibliotek av fristående spel som testas i spellabbet. De är ännu inte inkopplade i huvudappen; senare ska de låsas upp längs resan.
+Spelen byggs som ett bibliotek av fristående spel. Alla 31 spel är inkopplade i huvudappen, där de låses upp längs resan (se Spel under resan), och de finns även i spellabbet, där alla kan provas direkt utan resa.
 
 **Filer:**
 
@@ -1088,6 +1088,8 @@ Lamporna är släckta när man öppnar en bil och sparas inte.
 **Ljus på taket.** Med Blåljus, Varningsljus, Ljusramp eller Taxiskylt på taket visas en knapp som tänder och släcker taklampan. Den sitter bredvid tutan i gruppen Tuta och taklampa, och dess symbol och namn visar vad som sitter på taket, ritade som på manöverpanelen i en utryckningsbil: för Blåljus ett blått takljus (kupol på sockel) med strålar, för Varningsljus samma takljus i orange, för Ljusramp en ramp med lampor och strålar framåt, och för Taxiskylt en gul TAXI-skylt. Tänd är knappen blå. Blåljus och varningsljus blinkar, och blåljuset har också en sirén med två växlande toner. Ljusrampen sitter på en takbåge med fyra lamphus som är riktade framåt (glaset åt bilens front). Tänd lyser glasen stadigt vitt med sken framför lamporna och, i verkstaden, en svag ljuskägla framåt. På natten när man kör lyser rampen upp vägen långt framför bilen med en lång, bred ljuskägla från taket, som räcker längre än helljuset och lyser tillsammans med strålkastarna. Taxiskylten lyser upp i gult; släckta är rampens glas gråvita och skylten mörkare gul. Ljuset är släckt när man öppnar en bil och sparas inte.
 
 **Dimljus.** Bredvid strålkastarknapparna finns en egen grupp med två knappar, Dimljus fram (grön symbol) och Dimljus bak (gul symbol), som tänds och släcks var för sig och oberoende av strålkastarna, både i verkstaden och när man kör. Alla bilar har små runda främre dimljus lågt på framstötfångaren och ett rött bakre dimljus lågt baktill (på bussen ovanför baklamporna, på formelbilen mitt bak som ett regnljus). Tända lyser de främre vitgult med en låg, bred ljuskägla framåt, och det bakre starkt rött med sken. På natten lyser de främre dimljusen upp vägen närmast framför bilen och det bakre ger ett rött sken på vägen bakom. När dimljusen är tända visas samma symboler i varvräknaren: grön till vänster, gul till höger. Dimljusen är släckta när man öppnar en bil och sparas inte.
+
+**Neon.** I fliken ✨ Neon väljer man neon under bilen: Ingen, Blå, Lila, Grön, Rosa eller Röd (miniatyrerna visar neonet tänt, så att man ser färgen). Neonet är ett lysrör längs undersidan mellan hjulen, ett färgat sken ned mot marken och en lysande fläck på marken under bilen. När bilen har neon visas knappen Neon i gruppen med tuta och taklampa; den tänder och släcker neonet, både i verkstaden och när man kör. Väljer man en färg tänds neonet direkt. På natten färgar neonet också vägen under och runt bilen. Färgen sparas med bilen; om neonet är tänt sparas inte.
 
 **Klar!** tar en kort blixt, som ett foto, visar Vilken bil! och anropar att spelet är klart.
 

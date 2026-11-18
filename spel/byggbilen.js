@@ -353,7 +353,14 @@
   };
   // Höjd: -2 till +4 steg om 12 enheter. Hjulstorlek: -2 till +3 steg om 10 procent.
   const HEIGHT = {min: -2, max: 4, step: 12}, WSIZE = {min: -2, max: 3, step: 0.1};
-  const STD = {height: 0, wsize: 0, fuel: 100, battery: 100};
+  const STD = {height: 0, wsize: 0, fuel: 100, battery: 100, neon: 'ingen'};
+  // Neon under bilen: ett lysrör längs undersidan, ett sken ned mot marken och en lysande fläck på marken.
+  const NEONS = {
+    ingen: {name: 'Ingen'}, bla: {name: 'Blå', col: '#2f8bff'}, lila: {name: 'Lila', col: '#b04dff'},
+    gron: {name: 'Grön', col: '#2cff8a'}, rosa: {name: 'Rosa', col: '#ff4fb8'}, rod: {name: 'Röd', col: '#ff3030'}
+  };
+  const NEON_ICON = `<svg viewBox="-16 -12 32 24" width="30" height="22" aria-hidden="true"><path d="M-14 3 L-14 -2 Q-13 -5 -9 -5 L-5 -9 L5 -9 L9 -5 Q13 -5 14 -2 L14 3 Z" fill="currentColor"/>
+    <circle cx="-8" cy="4" r="3" fill="currentColor"/><circle cx="8" cy="4" r="3" fill="currentColor"/><g stroke="#b04dff" stroke-width="2.4" stroke-linecap="round"><path d="M-12 10 h24"/><path d="M-6 7 h12" opacity=".6"/></g></svg>`;
   // Förbrukning i procent per sekund: tomgång plus mer ju högre varv. Påfyllning i procent per sekund.
   const BURN = {idle: 0.5, rev: 2.5}, FILL = 30, LOW = 15;
 
@@ -393,6 +400,8 @@
   function carSvg(type, c, state, view){
     const T = TYPES[type], id = 'bgc' + (uid++), mode = state && state.lights || 'av', on = mode !== 'av', high = mode === 'hel';
     const fogF = !!(state && state.fogF), fogR = !!(state && state.fogR), FG = FOG[type];
+    // Neon: i miniatyrer (utan state) visas det tänt så att man ser färgen.
+    const NE = NEONS[c.neon || 'ingen'], neonOn = !!NE.col && (state ? !!state.neon : true);
     const lift = (c.height || 0) * HEIGHT.step, ws = 1 + (c.wsize || 0) * WSIZE.step;
     const W = WHEELS[c.wheels], grow = W.grow || 0, E = ENGINES[c.engine];
     const ground = T.wheels[0][1] + T.wheels[0][2] + grow;
@@ -423,10 +432,14 @@
         const n = Math.max(3, Math.round(len / 7)), seg = len / n;
         const zig = Array.from({length: n + 1}, (_, i) => `${i ? 'L' : 'M'}${w.x + (i % 2 ? 11 : -11)} ${(top + i * seg).toFixed(1)}`).join(' ');
         return `<rect x="${w.x - 4}" y="${top}" width="8" height="${(len + w.R * 0.6).toFixed(1)}" rx="3" fill="#5b6470"/><path d="${zig}" stroke="#f2a52e" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`; }).join('')}
-      ${beam}${fogF ? `<path d="M${FG.f[0] - 4} ${FG.f[1] - lift - 4} L${FG.f[0] + 70} ${FG.f[1] - lift + 4} L${FG.f[0] + 70} ${FG.f[1] - lift + 34} L${FG.f[0] - 4} ${FG.f[1] - lift + 4} Z" fill="url(#${id}b)"/>` : ''}
+      ${neonOn ? (() => { const x0 = T.wheels[0][0], x1 = T.wheels[1][0], top = BOTTOM[type] - lift, mid = (x0 + x1) / 2;
+        return `<defs><linearGradient id="${id}n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${NE.col}" stop-opacity=".7"/><stop offset="1" stop-color="${NE.col}" stop-opacity=".15"/></linearGradient>
+          <radialGradient id="${id}m"><stop offset="0" stop-color="${NE.col}" stop-opacity=".85"/><stop offset=".55" stop-color="${NE.col}" stop-opacity=".35"/><stop offset="1" stop-color="${NE.col}" stop-opacity="0"/></radialGradient></defs>
+          <ellipse cx="${mid}" cy="${ground}" rx="${(x1 - x0) / 2 + 80}" ry="16" fill="url(#${id}m)"/>
+          <rect x="${x0}" y="${top}" width="${x1 - x0}" height="${Math.max(4, ground - top)}" fill="url(#${id}n)"/>`; })() : ''}${beam}${fogF ? `<path d="M${FG.f[0] - 4} ${FG.f[1] - lift - 4} L${FG.f[0] + 70} ${FG.f[1] - lift + 4} L${FG.f[0] + 70} ${FG.f[1] - lift + 34} L${FG.f[0] - 4} ${FG.f[1] - lift + 4} Z" fill="url(#${id}b)"/>` : ''}
       <g class="bg-shake"><g transform="translate(0 ${-lift})">
         <g transform="translate(${T.wing[0]} ${T.wing[1]})">${WINGS[c.wing].svg(c.color)}</g>
-        ${pipes}${T.under ? T.under(c.color) : ''}
+        ${pipes}${T.under ? T.under(c.color) : ''}${neonOn ? `<path d="M${T.wheels[0][0] + 10} ${BOTTOM[type] - 2} L${T.wheels[1][0] - 10} ${BOTTOM[type] - 2}" stroke="${NE.col}" stroke-width="6" stroke-linecap="round"/><path d="M${T.wheels[0][0] + 10} ${BOTTOM[type] - 2} L${T.wheels[1][0] - 10} ${BOTTOM[type] - 2}" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>` : ''}
         <path d="${T.body}" fill="${c.color}" stroke="#222" stroke-width="4" stroke-linejoin="round"/>
         <g clip-path="url(#${id})">${LIVERIES[c.livery].svg(T)}${T.shade ? `<rect x="0" y="40" width="500" height="170" fill="url(#${id}s)"/>` : ''}${T.detail ? T.detail(c.color) : ''}</g>
         <path d="${T.body}" fill="none" stroke="#222" stroke-width="4" stroke-linejoin="round"/>
@@ -590,13 +603,13 @@
     const TABS = [
       {id: 'color', name: 'Färg', icon: '🎨'}, {id: 'livery', name: 'Dekor', icon: '🏁', set: LIVERIES}, {id: 'roof', name: 'Tak', icon: '🚨', set: ROOFS},
       {id: 'wing', name: 'Vinge', icon: '🪽', set: WINGS}, {id: 'hood', name: 'Huv', icon: '🔧', set: HOODS}, {id: 'head', name: 'Framlampor', icon: '💡', set: HEADS},
-      {id: 'tail', name: 'Baklampor', icon: '🔴', set: TAILS}, {id: 'wheels', name: 'Fälgar', icon: '🛞', set: WHEELS}, {id: 'engine', name: 'Motor', icon: '⚙️', set: ENGINES}, {id: 'chassi', name: 'Höjd och hjul', icon: '🔩'}
+      {id: 'tail', name: 'Baklampor', icon: '🔴', set: TAILS}, {id: 'wheels', name: 'Fälgar', icon: '🛞', set: WHEELS}, {id: 'engine', name: 'Motor', icon: '⚙️', set: ENGINES}, {id: 'neon', name: 'Neon', icon: '✨', set: NEONS}, {id: 'chassi', name: 'Höjd och hjul', icon: '🔩'}
     ];
     let dbg = null;   // bara för test: läser fart och lutning i körläget
     function build(){
       const type = st.type, T = TYPES[type];
       dbg = () => ({v, slope, carX, drive, running, gas, brake});
-      let c = st.cars[type], tab = 'color', running = false, idleT = 0, drive = false, v = 0, carX = 0, wheelA = 0, brake = false, slope = 0, gear = 1, stillT = 0, sel = 'P', lamps = 'av', fogF = false, fogR = false, blinker = 'off', indT = 0, indOn = null, rpm = 0, gas = false, lights = false, raf = 0, last = 0, puffT = 0, blinkT = 0, yayTimer = null;
+      let c = st.cars[type], tab = 'color', running = false, idleT = 0, drive = false, v = 0, carX = 0, wheelA = 0, brake = false, slope = 0, gear = 1, stillT = 0, sel = 'P', lamps = 'av', fogF = false, fogR = false, neonLit = false, blinker = 'off', indT = 0, indOn = null, rpm = 0, gas = false, lights = false, raf = 0, last = 0, puffT = 0, blinkT = 0, yayTimer = null;
       el.innerHTML = `
         <div class="bg-top"><button type="button" class="bg-btn" data-a="types">← Byt bil</button><button type="button" class="bg-btn" data-a="garage">← Verkstan</button><div class="bg-title">${T.name}</div>
           <button type="button" class="bg-btn" data-a="night"></button><button type="button" class="bg-btn" data-a="drive">🏁 Kör!</button><button type="button" class="bg-btn done" data-a="done">Klar!</button></div>
@@ -627,6 +640,7 @@
               <div class="bg-group" role="group" aria-label="Tuta och taklampa">
                 <button type="button" class="bg-mini bg-horn" aria-label="Tuta">${DASH_ICON('horn')}<span>Tuta</span></button>
                 <button type="button" class="bg-mini bg-siren" hidden aria-pressed="false" aria-label="Blåljus"></button>
+                <button type="button" class="bg-mini bg-neon" hidden aria-pressed="false" aria-label="Neon">${NEON_ICON}<span>Neon</span></button>
               </div>
               <div class="bg-group bg-fuel" role="group" aria-label="Bränsle">
                 <svg class="bg-fuelg" viewBox="0 0 150 60" aria-hidden="true"></svg>
@@ -643,6 +657,11 @@
         el.querySelectorAll('[data-l]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
         blip(lamps === 'av' ? [700, 520] : lamps === 'hel' ? [880, 1175, 1400] : [880, 1175], 0.07); drawCar();
       }));
+      // Neon: knappen syns bara när bilen har neon, och tänder och släcker det.
+      const neonBtn = el.querySelector('.bg-neon');
+      function paintNeon(){ const has = c.neon && c.neon !== 'ingen'; neonBtn.hidden = !has; if(!has) neonLit = false; neonBtn.setAttribute('aria-pressed', String(neonLit)); }
+      neonBtn.addEventListener('click', () => { neonLit = !neonLit; blip(neonLit ? [880, 1320] : [700, 440], 0.06); paintNeon(); drawCar(); });
+      paintNeon();
       // Dimljus fram och bak: var för sig, oberoende av strålkastarna.
       el.querySelectorAll('[data-fog]').forEach(b => b.addEventListener('click', () => {
         if(b.dataset.fog === 'f') fogF = !fogF; else fogR = !fogR;
@@ -687,10 +706,10 @@
       function drawCar(){
         if(drive){
           const g = carEl.querySelector('.w-car');
-          g.innerHTML = carSvg(type, c, {lights: lamps, fogF, fogR}).replace(/^\s*<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+          g.innerHTML = carSvg(type, c, {lights: lamps, fogF, fogR, neon: neonLit}).replace(/^\s*<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
         }else{
           const old = carEl.querySelector('svg'); if(old) old.remove();
-          carEl.insertAdjacentHTML('afterbegin', carSvg(type, c, {lights: lamps, fogF, fogR}));
+          carEl.insertAdjacentHTML('afterbegin', carSvg(type, c, {lights: lamps, fogF, fogR, neon: neonLit}));
         }
         const R = ROOFS[c.roof];
         sirenBtn.hidden = !R.light;
@@ -799,6 +818,7 @@
         // Byter man motor stängs den gamla av, och den nya står still tills man trycker START.
         if(k === 'engine'){ if(running) stopEngine(); if(filling) stopFill(); }
         c[k] = v; save(); blip([660, 880], 0.08);
+        if(k === 'neon'){ neonLit = v !== 'ingen'; paintNeon(); }
         drawCar(); drawOpts(); drawTach(); paintFillBtn();
       }
 
@@ -1165,6 +1185,13 @@
             const [wx, wy] = pt(FG.r[0], FG.r[1]);
             beam += `<ellipse cx="${(wx - 22).toFixed(1)}" cy="${(wy + 6).toFixed(1)}" rx="46" ry="16" fill="#ff3020" opacity=".32" style="mix-blend-mode:screen"/>`;
           }
+        }
+        // Neon på natten: ett färgat sken på vägen under och runt bilen.
+        if(n && neonLit && NEONS[c.neon] && NEONS[c.neon].col){
+          const ca = Math.cos(slope), sa = Math.sin(slope);
+          const pt = (x, y) => { const hx = x - rx, hy = y - G.lift - G.ground; return [xr - camX + s * (hx * ca - hy * sa), yr + s * (hx * sa + hy * ca)]; };
+          const [mx, my] = pt((T.wheels[0][0] + T.wheels[1][0]) / 2, G.ground);
+          beam += `<ellipse cx="${mx.toFixed(1)}" cy="${(my + 2).toFixed(1)}" rx="230" ry="26" fill="${NEONS[c.neon].col}" opacity=".35" style="mix-blend-mode:screen"/>`;
         }
         // Blåljus och varningsljus på natten: ett sken runt lampan som blinkar i samma takt som lamporna
         // (blåljuset växlar mellan vänster och höger lampa) och ett färgat skimmer på vägen runt bilen.
